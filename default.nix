@@ -846,6 +846,7 @@ in {
         serviceConfig.Type = "oneshot";
         serviceConfig.RemainAfterExit = true;
         serviceConfig.NetworkNamespacePath = "/var/run/netns/${name}";
+        stopIfChanged = false;
       };
     }) (lib.filterAttrs (k: v: hasNftablesRules v) cfg.networkNamespaces))
     // {
