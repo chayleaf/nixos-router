@@ -79,8 +79,9 @@ Why not create a HTML page for this? Because I'm lazy.
     - `<namespace>.nftables.jsonRules` - JSON rules to load
     - `<namespace>.nftables.{stopTextFile,stopTextRules,stopJsonFile,stopJsonRules}` -
       same as above, but get executed *before first start* and at stop
-      time. Basically, they are supposed to undo the changes this ruleset
-      applies, or do nothing if it's not applied anyway.
+      time. Basically, they are supposed to undo the changes this
+      ruleset applies, or do nothing if it's not applied anyway. They
+      default to `flush ruleset` if no stop rules are set.
 - `router.veths.<name>` - veth pairs
   - `<veth>.peerName` - peer name (second device to be created at the
     same time)
