@@ -39,6 +39,15 @@ settings to use nftables. Firewall is still set to use iptables, as
 it uses `networking.nftables`, which is *at the moment* incompatible
 with this module.
 
+## See also
+
+- [notnft](https://github.com/chayleaf/notnft) - a Nix DSL for writing
+  JSON nftables rules. If you use the included NixOS module, it is
+  automatically used for type checking JSON nftables rules.
+- [My router
+  config](https://github.com/chayleaf/dotfiles/blob/master/system/hosts/router/default.nix)
+  using this framework.
+
 ## Options
 
 Why not create a HTML page for this? Because I'm lazy.
@@ -239,10 +248,3 @@ Why not create a HTML page for this? Because I'm lazy.
         default to true.
       - `<iface>.ipv6.corerad.settings` - general CoreRAD settings
         (useful for setting `debug` options)
-
-## See also
-
-[notnft](https://github.com/chayleaf/notnft) - a Nix DSL for writing
-JSON nftables rules. If you use the included NixOS module, it is
-automatically used for type checking JSON nftables rules.
-
