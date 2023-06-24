@@ -30,7 +30,7 @@ am not willing to work on it. Some parts are more upstreamable, such as
 allowing JSON nftables rulesets, while other are less upstreamable,
 like... most parts of this repo.
 
-When [this](https://github.com/systemd/systemd/issues/11103]) gets
+When [this](https://github.com/systemd/systemd/issues/11103) gets
 closed, I might be able to migrate to systemd-networkd. This may be the
 time when NixOS and this repo become compatible again.
 
