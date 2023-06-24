@@ -35,9 +35,8 @@ closed, I might be able to migrate to systemd-networkd. This may be the
 time when NixOS and this repo become compatible again.
 
 This module expects you to use nftables, so it modifies NixOS's default
-settings to use nftables. Firewall is still set to use iptables, as
-it uses `networking.nftables`, which is *at the moment* incompatible
-with this module.
+settings to use nftables. Firewall is still set to use iptables, but if
+you set `networking.nftables.enable` to `true`, it should use nftables.
 
 ## See also
 
@@ -71,8 +70,7 @@ Why not create a HTML page for this? Because I'm lazy.
       rulesets, and doesn't flush when stopping `nftables.service`
       (unless you tell it to flush). Also, it supports loading static
       rules and file-based rules at the same time. One-way
-      `networking.nftables` operability may be added later via
-      `lib.mkForce` to allow using the nftables-based firewall.
+      `networking.nftables` operability is supported.
     - `<namespace>.nftables.textFile` - `.nft` file to load
     - `<namespace>.nftables.textRules` - nft rules to load
     - `<namespace>.nftables.jsonFile` - `.json` file to load

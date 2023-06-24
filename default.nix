@@ -842,11 +842,14 @@ in {
         after = [ "network-pre.target" "netns-${name}.service" ];
         bindsTo = [ "netns-${name}.service" ];
         script = mkNftStartCmd value;
+        reload = mkNftStartCmd value;
         preStop = mkNftStopCmd value;
-        serviceConfig.Type = "oneshot";
-        serviceConfig.RemainAfterExit = true;
-        serviceConfig.NetworkNamespacePath = "/var/run/netns/${name}";
-        stopIfChanged = false;
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          NetworkNamespacePath = "/var/run/netns/${name}";
+        };
+        reloadIfChanged = true;
       };
     }) (lib.filterAttrs (k: v: hasNftablesRules v) cfg.networkNamespaces))
     // {
@@ -871,5 +874,13 @@ in {
         if builtins.isString service then router-lib.mkServiceForIf interface { }
         else router-lib.mkServiceForIf' (builtins.removeAttrs service [ "service" ] // { inherit interface; }) { };
     }) icfg.dependentServices) cfg.interfaces));
-  } ]);
+  } (lib.mkIf config.networking.nftables.enable {
+    systemd.services.nftables.serviceConfig.ExecStart = lib.mkForce "${pkgs.coreutils}/bin/true";
+    systemd.services.nftables.serviceConfig.ExecStop = lib.mkForce "${pkgs.coreutils}/bin/true";
+    systemd.services.nftables.serviceConfig.ExecReload = lib.mkForce "${pkgs.coreutils}/bin/true";
+    router.networkNamespaces.default = lib.mkIf (config.networking.nftables.ruleset != "" || config.networking.nftables.rulesetFile != null) {
+      nftables.textRules = lib.mkIf (config.networking.nftables.ruleset != "") config.networking.nftables.ruleset;
+      nftables.textFile = lib.mkIf (config.networking.nftables.rulesetFile != null) config.networking.nftables.rulesetFile;
+    };
+  }) ]);
 }
