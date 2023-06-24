@@ -105,9 +105,6 @@ Why not create a HTML page for this? Because I'm lazy.
   - `<iface>.systemdLinkMatchConfig` - values to add to
     [systemd.link(5)](https://www.freedesktop.org/software/systemd/man/systemd.link.html)
     `[Match]` config for this interface
-  - `<iface>.nftables` - nftables rules to run when this interface gets
-    added (and removed). See `router.networkNamespaces.*.nftables` for
-    options.
   - `<iface>.hostapd` - run hostapd to turn this device into a wireless
     access point
     - `<iface>.hostapd.enable` - enable hostapd

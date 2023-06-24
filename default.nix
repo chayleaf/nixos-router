@@ -118,7 +118,6 @@ let
           ${icfg.bridge} = if icfg.hostapd.enable then null else interface;
         }) cfg.interfaces));
   systemHasNftables = config.networking.nftables.enable
-    || builtins.any hasNftablesRules (builtins.attrValues cfg.interfaces)
     || builtins.any hasNftablesRules (builtins.attrValues cfg.networkNamespaces);
   router-lib = import ./lib.nix {
     inherit lib config utils;
@@ -207,11 +206,6 @@ in {
           description = "This device's systemd.link(5) match config";
           default = { };
           type = lib.types.attrs;
-        };
-        options.nftables = lib.mkOption {
-          description = "Per-interface nftables config";
-          default = { };
-          type = nftType " when starting the interface" " when stopping the interface";
         };
         options.hostapd = lib.mkOption {
           description = "hostapd options";
@@ -832,20 +826,6 @@ in {
         '';
       };
     }) 
-    // builtins.zipAttrsWith (k: builtins.head) (lib.mapAttrsToList (interface: value: {
-      "nftables-${utils.escapeSystemdPath interface}" = let netns = cfg.interfaces.${interface}.netns or "";
-      in router-lib.mkServiceForIf interface {
-        description = "nftables firewall for ${interface}";
-        wantedBy = [ "multi-user.target" ];
-        before = [ "network-setup.service" ];
-        after = [ "network-pre.target" ];
-        script = mkNftStartCmd value;
-        preStop = mkNftStopCmd value;
-        serviceConfig.Type = "oneshot";
-        serviceConfig.RemainAfterExit = true;
-        serviceConfig.NetworkNamespacePath = lib.mkIf (netns != "") "/var/run/netns/${netns}";
-      };
-    }) (lib.filterAttrs (k: v: hasNftablesRules v) cfg.interfaces))
     // builtins.zipAttrsWith (k: builtins.head) (lib.mapAttrsToList (name: value: {
       "nftables-netns-${name}" = {
         description = "nftables firewall for network namespace ${name}";
