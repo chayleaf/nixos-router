@@ -2,10 +2,10 @@
 , config
 , pkgs
 , utils
-, notnft ? null
 , ... }:
 
 let
+  notnft = config._module.args.notnft or config.notnft or null;
   cfg = config.router;
   nftFlags = "";
   mkNftStartCmd = attrs: let
@@ -93,7 +93,7 @@ let
     };
     options.jsonRules = lib.mkOption {
       description = "JSON rules to run${extraDesc}.";
-      type = lib.types.nullOr (notnft.types.ruleset or config.notnft.types.ruleset or (pkgs.formats.json {}).type);
+      type = lib.types.nullOr (notnft.types.ruleset or (pkgs.formats.json {}).type);
       default = null;
     };
     options.stopTextFile = lib.mkOption {
@@ -875,12 +875,17 @@ in {
         else router-lib.mkServiceForIf' (builtins.removeAttrs service [ "service" ] // { inherit interface; }) { };
     }) icfg.dependentServices) cfg.interfaces));
   } (lib.mkIf config.networking.nftables.enable {
-    systemd.services.nftables.serviceConfig.ExecStart = lib.mkForce "${pkgs.coreutils}/bin/true";
-    systemd.services.nftables.serviceConfig.ExecStop = lib.mkForce "${pkgs.coreutils}/bin/true";
-    systemd.services.nftables.serviceConfig.ExecReload = lib.mkForce "${pkgs.coreutils}/bin/true";
-    router.networkNamespaces.default = lib.mkIf (config.networking.nftables.ruleset != "" || config.networking.nftables.rulesetFile != null) {
-      nftables.textRules = lib.mkIf (config.networking.nftables.ruleset != "") config.networking.nftables.ruleset;
-      nftables.textFile = lib.mkIf (config.networking.nftables.rulesetFile != null) config.networking.nftables.rulesetFile;
+    systemd.services.nftables = lib.mkForce {
+      description = "nftables stub";
+      serviceConfig.Type = "oneshot";
+      serviceConfig.RemainAfterExit = true;
+      serviceConfig.ExecStart = "${pkgs.coreutils}/bin/true";
+    };
+    router.networkNamespaces.default = let
+      inherit (config.networking.nftables) ruleset rulesetFile;
+    in lib.mkIf (rulesetFile != null || ruleset != "") {
+      nftables.textRules = lib.mkIf (rulesetFile == null && ruleset != "") ruleset;
+      nftables.textFile = lib.mkIf (rulesetFile != null) rulesetFile;
     };
   }) ]);
 }

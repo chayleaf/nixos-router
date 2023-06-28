@@ -16,5 +16,8 @@
       # this is the standard library for dealing with ip addresses
       lib = forEachSystem ({ ... }: nonStandardLib { inherit (nixpkgs) lib; });
       nixosModules.default = import ./.;
+      checks.x86_64-linux.default = let pkgs = nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./checks.nix {
+        inherit nixpkgs;
+      };
     };
 }
