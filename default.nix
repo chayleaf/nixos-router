@@ -538,14 +538,14 @@ in {
 
     boot.kernel.sysctl = {
       "net.netfilter.nf_log_all_netns" = true;
-    } // builtins.zipAttrsWith (k: builtins.head) (lib.mapAttrsToList (name: icfg:
+    } // builtins.zipAttrsWith (k: builtins.head) (lib.flip lib.mapAttrsToList cfg.interfaces (name: icfg:
       lib.optionalAttrs (icfg.ipv4.rpFilter != null) {
         "net.ipv4.conf.${name}.rp_filter" = icfg.ipv4.rpFilter;
       } // lib.optionalAttrs icfg.ipv4.enableForwarding {
         "net.ipv4.conf.${name}.forwarding" = true;
       } // lib.optionalAttrs icfg.ipv6.enableForwarding {
         "net.ipv6.conf.${name}.forwarding" = true;
-      }) cfg.interfaces);
+      }));
 
     networking.usePredictableInterfaceNames = true;
     networking.firewall.filterForward = lib.mkDefault false;
@@ -834,24 +834,27 @@ in {
         '';
       };
     }) 
-    // builtins.zipAttrsWith (k: builtins.head) (lib.mapAttrsToList (name: value: {
-      "nftables-netns-${name}" = {
-        description = "nftables firewall for network namespace ${name}";
-        wantedBy = [ "network.target" ];
-        before = [ "network-setup.service" ];
-        after = [ "network-pre.target" "netns-${name}.service" ];
-        bindsTo = [ "netns-${name}.service" ];
-        script = mkNftStartCmd value;
-        reload = mkNftStartCmd value;
-        preStop = mkNftStopCmd value;
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          NetworkNamespacePath = "/var/run/netns/${name}";
+    // builtins.zipAttrsWith (k: builtins.head) (lib.flip lib.mapAttrsToList
+      (lib.filterAttrs (_: hasNftablesRules) cfg.networkNamespaces)
+      (name: value: {
+        "nftables-netns-${name}" = {
+          description = "nftables firewall for network namespace ${name}";
+          wantedBy = [ "network.target" ];
+          before = [ "network-setup.service" ];
+          after = [ "network-pre.target" "netns-${name}.service" ];
+          bindsTo = [ "netns-${name}.service" ];
+          script = mkNftStartCmd value;
+          reload = mkNftStartCmd value;
+          preStop = mkNftStopCmd value;
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            NetworkNamespacePath = "/var/run/netns/${name}";
+          };
+          reloadIfChanged = true;
         };
-        reloadIfChanged = true;
-      };
-    }) (lib.filterAttrs (k: v: hasNftablesRules v) cfg.networkNamespaces))
+      })
+    )
     // {
       network-setup = {
         partOf = map (name: "network-addresses-${utils.escapeSystemdPath name}.service") (builtins.attrNames cfg.interfaces);
@@ -868,13 +871,15 @@ in {
       };
     });
     networking.useDHCP = lib.mkIf (builtins.any (x: x.dhcpcd.enable) (builtins.attrValues cfg.interfaces)) false;
-  } {
+  }
+  {
     systemd.services = builtins.zipAttrsWith (k: builtins.head) (builtins.concatLists (lib.mapAttrsToList (interface: icfg: map (service: {
       ${service.service or service} =
         if builtins.isString service then router-lib.mkServiceForIf interface { }
         else router-lib.mkServiceForIf' (builtins.removeAttrs service [ "service" ] // { inherit interface; }) { };
     }) icfg.dependentServices) cfg.interfaces));
-  } (lib.mkIf config.networking.nftables.enable {
+  }
+  (lib.mkIf config.networking.nftables.enable {
     systemd.services.nftables = lib.mkForce {
       description = "nftables stub";
       serviceConfig.Type = "oneshot";

@@ -9,7 +9,7 @@ let
   cfg = config.router;
 in {
   config = lib.mkIf cfg.enable {
-    systemd.services = lib.mapAttrs' (interface: icfg: let
+    systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg: let
       cfg = icfg.ipv6.corerad;
       settingsFormat = pkgs.formats.toml {};
       ifaceConfig = {
@@ -56,6 +56,6 @@ in {
           RestartKillSignal = "SIGHUP";
         };
       });
-    }) cfg.interfaces;
+    });
   };
 }

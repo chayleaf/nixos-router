@@ -43,7 +43,7 @@ let
 in {
   config = lib.mkIf cfg.enable (lib.mkMerge [
     (let
-      configs = builtins.mapAttrs (interface: icfg:
+      configs = lib.flip builtins.mapAttrs cfg.interfaces (interface: icfg:
       let
         cfg4 = icfg.ipv4.kea;
       in if cfg4.configFile != null then cfg4.configFile else (format.generate "kea-dhcp4-${interface}.conf" {
@@ -93,7 +93,7 @@ in {
               };
           } // keaSettings) icfg.ipv4.addresses;
         } // cfg4.settings;
-      })) cfg.interfaces;
+      }));
     in {
       environment.etc = lib.mapAttrs' (interface: icfg: {
         name = "kea/dhcp4-server-${utils.escapeSystemdPath interface}.conf";
@@ -101,7 +101,8 @@ in {
           source = configs.${interface};
         };
       }) cfg.interfaces;
-      systemd.services = lib.mapAttrs' (interface: icfg: {
+
+      systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg: {
         name = "kea-dhcp4-server-${utils.escapeSystemdPath interface}";
         value = lib.mkIf (icfg.ipv4.kea.enable && icfg.ipv4.addresses != [ ]) (router-lib.mkServiceForIf interface {
           description = "Kea DHCP4 Server (${interface})";
@@ -118,10 +119,10 @@ in {
             CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
           } // commonServiceConfig;
         });
-      }) cfg.interfaces;
+      });
     })
     (let
-      configs = builtins.mapAttrs (interface: icfg:
+      configs = lib.flip builtins.mapAttrs cfg.interfaces (interface: icfg:
       let
         cfg6 = icfg.ipv6.kea;
       in if cfg6.configFile != null then cfg6.configFile else (format.generate "kea-dhcp6-${interface}.conf" {
@@ -164,7 +165,7 @@ in {
               };
           } // keaSettings) icfg.ipv6.addresses;
         } // cfg6.settings;
-      })) cfg.interfaces;
+      }));
     in {
       environment.etc = lib.mapAttrs' (interface: icfg: {
         name = "kea/dhcp6-server-${utils.escapeSystemdPath interface}.conf";
@@ -172,7 +173,8 @@ in {
           source = configs.${interface};
         };
       }) cfg.interfaces;
-      systemd.services = lib.mapAttrs' (interface: icfg: {
+
+      systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg: {
         name = "kea-dhcp6-server-${utils.escapeSystemdPath interface}";
         value = lib.mkIf (icfg.ipv6.kea.enable && icfg.ipv6.addresses != [ ]) (router-lib.mkServiceForIf interface {
           description = "Kea DHCP6 Server (${interface})";
@@ -189,7 +191,7 @@ in {
             CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
           } // commonServiceConfig;
         });
-      }) cfg.interfaces;
+      });
     })
   ]);
 }

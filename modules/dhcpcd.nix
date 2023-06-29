@@ -27,11 +27,13 @@ in {
     users.groups.dhcpcd = {};
     environment.systemPackages = [ pkgs.dhcpcd ];
     environment.etc."dhcpcd.exit-hook".source = exitHook;
+
     powerManagement.resumeCommands = builtins.concatStringsSep "\n" (lib.mapAttrsToList (interface: icfg: ''
       # Tell dhcpcd to rebind its interfaces if it's running.
       /run/current-system/systemd/bin/systemctl reload "dhcpcd-${utils.escapeSystemdPath interface}.service"
     '') cfg.interfaces);
-    systemd.services = lib.mapAttrs' (interface: icfg: let
+
+    systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg: let
       dhcpcdConf = pkgs.writeText "dhcpcd-${interface}.conf" ''
         hostname
         option domain_name_servers, domain_name, domain_search, host_name
@@ -62,6 +64,6 @@ in {
           Restart = "always";
         };
       });
-    }) cfg.interfaces;
+    });
   };
 }

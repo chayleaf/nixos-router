@@ -13,7 +13,7 @@ in {
     environment.systemPackages = [ hostapd ] ++ (with pkgs; [ wirelesstools ]);
     services.udev.packages = with pkgs; [ crda ];
     hardware.wirelessRegulatoryDatabase = true;
-    systemd.services = lib.mapAttrs' (interface: icfg: let
+    systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg: let
       escapedInterface = utils.escapeSystemdPath interface;
       compileValue = k: v:
         if builtins.isBool v then (if v then "1" else "0")
@@ -81,6 +81,6 @@ in {
           Restart = "always";
         };
       });
-    }) cfg.interfaces;
+    });
   };
 }

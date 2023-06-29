@@ -16,7 +16,7 @@ in {
     };
     users.groups.radvd = { };
 
-    systemd.services = lib.mapAttrs' (interface: icfg: let
+    systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg: let
       ifaceOpts = {
         AdvSendAdvert = true;
         AdvManagedFlag = icfg.ipv6.kea.enable && icfg.ipv6.addresses != [ ];
@@ -62,6 +62,6 @@ in {
           Restart = "always";
         };
       });
-    }) cfg.interfaces;
+    });
   };
 }
