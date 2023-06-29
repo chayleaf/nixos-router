@@ -134,11 +134,11 @@ let
   importModule = x: callModule (import x);
 in {
   imports = map importModule [
-    ./hostapd.nix
-    ./kea.nix
-    ./radvd.nix
-    ./corerad.nix
-    ./dhcpcd.nix
+    ./modules/hostapd.nix
+    ./modules/kea.nix
+    ./modules/radvd.nix
+    ./modules/corerad.nix
+    ./modules/dhcpcd.nix
   ];
 
   options.router = {
