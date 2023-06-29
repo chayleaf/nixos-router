@@ -884,7 +884,7 @@ in {
     router.networkNamespaces.default = let
       inherit (config.networking.nftables) ruleset rulesetFile;
     in lib.mkIf (rulesetFile != null || ruleset != "") {
-      nftables.textRules = lib.mkIf (rulesetFile == null && ruleset != "") ruleset;
+      nftables.textRules = lib.mkIf (rulesetFile == null) ruleset;
       nftables.textFile = lib.mkIf (rulesetFile != null) rulesetFile;
     };
   }) ]);
