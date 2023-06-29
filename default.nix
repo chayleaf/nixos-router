@@ -118,13 +118,11 @@ let
     };
   };
   # a set of { <bridgeName> = [ <bridge interfaces> ]; }
-  bridges = builtins.zipAttrsWith
-    (k: builtins.filter (x: x != null))
-    (builtins.filter (x: x != null)
-      (lib.mapAttrsToList
-        (interface: icfg: if icfg.bridge == null then null else {
-          ${icfg.bridge} = if icfg.hostapd.enable then null else interface;
-        }) cfg.interfaces));
+  bridges = lib.zipAttrs
+    (lib.mapAttrsToList
+      (interface: icfg: if icfg.bridge == null || icfg.hostapd.enable then { } else {
+        ${icfg.bridge} = interface;
+      }) cfg.interfaces);
   systemHasNftables = config.networking.nftables.enable
     || builtins.any hasNftablesRules (builtins.attrValues cfg.networkNamespaces);
   router-lib = import ./lib.nix {
@@ -718,6 +716,7 @@ in {
         before = [ "network-setup.service" ];
         serviceConfig.Type = "oneshot";
         serviceConfig.RemainAfterExit = true;
+        stopIfChanged = false;
         path = [ pkgs.iproute2 ];
         script = ''
           ip link show dev "${interface}" >/dev/null 2>&1 && ip link del "${interface}" || true
@@ -776,6 +775,7 @@ in {
         before = [ "network-pre.target" ];
         wants = [ "network-pre.target" ];
         wantedBy = [ "network-setup.service" "network.target" ];
+        stopIfChanged = false;
         serviceConfig.Type = "oneshot";
         serviceConfig.RemainAfterExit = true;
         path = [ pkgs.iproute2 ];
@@ -880,8 +880,10 @@ in {
     }) icfg.dependentServices) cfg.interfaces));
   }
   (lib.mkIf config.networking.nftables.enable {
+    # a stub for compatibility with services that depend on networking.nftables
     systemd.services.nftables = lib.mkForce {
       description = "nftables stub";
+      bindsTo = [ "nftables-netns-default.service" ];
       serviceConfig.Type = "oneshot";
       serviceConfig.RemainAfterExit = true;
       serviceConfig.ExecStart = "${pkgs.coreutils}/bin/true";
