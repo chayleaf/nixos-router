@@ -245,14 +245,14 @@ Why not create a HTML page for this? Because I'm lazy.
       - `<iface>.ipv6.radvd.enable` - enable radvd
       - `<iface>.ipv6.radvd.interfaceSettings` - per-interface settings
         (attrs). Defaults to `AdvSendAdvert = true`, if any DHCP server
-        (e.g. Kea) is enabled `AdvManagedFlag` defaults to true, and
+        (e.g. Kea) is enabled then `AdvManagedFlag` and
         `AdvOtherConfigFlag` default to true as well.
     - `<iface>.ipv6.corerad` - CoreRAD settings (IPv6 router
       advertisement daemon)
       - `<iface>.ipv6.corerad.enable` - enable radvd
       - `<iface>.ipv6.corerad.interfaceSettings` - per-interface
         settings (attrs). Defaults to `advertise = true`, if any DHCP
-        server (e.g. Kea) is enabled `managed` and `other_config`
-        default to true.
+        server (e.g. Kea) is enabled then `managed` and `other_config`
+        default to true as well.
       - `<iface>.ipv6.corerad.settings` - general CoreRAD settings
         (useful for setting `debug` options)
