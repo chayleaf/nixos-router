@@ -78,19 +78,19 @@ Why not create a HTML page for this? Because I'm lazy.
   - `<namespace>.nftables` - nftables config to run in this namespace
     (see `router.nftables` for options)
     - Difference from `networking.nftables` - this supports JSON
-      rulesets, and doesn't flush when stopping `nftables.service`
-      (unless you tell it to flush). Also, it supports loading static
-      rules and file-based rules at the same time. One-way
-      `networking.nftables` operability is supported.
+      rulesets, and lets you specify custom stop/reload rules, while
+      `networking.nftables` always flushes the ruleset on stop. Also, it
+      supports loading static rules and file-based rules at the same
+      time. One-way `networking.nftables` operability is supported.
     - `<namespace>.nftables.textFile` - `.nft` file to load
     - `<namespace>.nftables.textRules` - nft rules to load
     - `<namespace>.nftables.jsonFile` - `.json` file to load
     - `<namespace>.nftables.jsonRules` - JSON rules to load
     - `<namespace>.nftables.{stopTextFile,stopTextRules,stopJsonFile,stopJsonRules}` -
-      same as above, but get executed *before first start* and at stop
-      time. Basically, they are supposed to undo the changes this
-      ruleset applies, or do nothing if it's not applied anyway. They
-      default to `flush ruleset` if no stop rules are set.
+      same as above, but get executed *before first start* and at
+      stop/reload time. Basically, they are supposed to undo the changes
+      this ruleset applies, or do nothing if it's not applied anyway.
+      They default to `flush ruleset` if no stop rules are set.
 - `router.veths.<name>` - veth pairs
   - `<veth>.peerName` - peer name (second device to be created at the
     same time)
