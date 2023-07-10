@@ -38,6 +38,17 @@ This module expects you to use nftables, so it modifies NixOS's default
 settings to use nftables. Firewall is still set to use iptables, but if
 you set `networking.nftables.enable` to `true`, it should use nftables.
 
+## Roadmap
+
+I think the next logical step for this project is adding nftables
+options for common scenarios like NAT, so this is what I want to do
+next. Right now you're expected to create the nftables rules from
+scratch, but something like `networking.nat` (but with more
+customizability) could be nice. Another potential way to improve this is
+adding the missing virtual device types (currently only bridges and veth
+pairs are supported; `networking` has bridge, bond, MacVLAN, 6-to-4,
+VLAN, Open vSwitch device support).
+
 ## See also
 
 - [notnft](https://github.com/chayleaf/notnft) - a Nix DSL for writing
