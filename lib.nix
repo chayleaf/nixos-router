@@ -141,16 +141,15 @@ in lib.optionalAttrs (config != null && utils != null) rec {
   ip6Regex = let
     compRegex = "([1-9a-f][0-9a-f]{0,3}|0)";
     compStartRegex = "([1-9a-f][0-9a-f]{0,3}:|0:)";
+    compEndRegex = "(:[1-9a-f][0-9a-f]{0,3}|:0)";
     # exactly n components with trailing :
     compStartExact = n: if n == 1 then "${compRegex}:"
       else "${compStartRegex}{${toString n}}";
-    # up to n components with leading :
     compEndUpTo = n: if n == 1 then ":${compRegex}?"
-      else if n == 2 then ":(${compStartRegex}?${compRegex})?"
-      else ":(${compStartRegex}{0,${toString (n - 1)}}${compRegex})?";
+      else "(:|${compEndRegex}{1,${toString n}})";
   in builtins.concatStringsSep "|" [
     # the end is either :: or :${compRegex}
-    "${compStartExact 7}(${compRegex}|:)"
+    "${compStartExact 7}(:|${compRegex})"
     # there's :: in the middle
     (compStartExact 6 + compEndUpTo 1)
     (compStartExact 5 + compEndUpTo 2)
