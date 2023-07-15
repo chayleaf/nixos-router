@@ -1,6 +1,8 @@
 {
   description = "A router framework for NixOS";
 
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
   outputs = { self, nixpkgs }:
     let
       forEachSystem = func: nixpkgs.lib.genAttrs [ "aarch64-linux" "aarch64-darwin" "x86_64-darwin" "x86_64-linux" ] (system: func {
