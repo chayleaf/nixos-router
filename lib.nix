@@ -26,7 +26,7 @@ let
       # prefer :: in the middle, as it saves more space (a::b vs ::a:b/a:b::)
       updateMax = newCurLen > maxLen || (maxLen == newCurLen && maxStart <= 0);
       newCurStart = if updateCur then (if curStart == -1 then i else curStart) else -1;
-    in { 
+    in {
       i = i + 1;
       curLen = newCurLen;
       curStart = newCurStart;
