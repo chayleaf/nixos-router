@@ -128,10 +128,8 @@ let
   router-lib = import ./lib.nix {
     inherit lib config utils;
   };
-  callModule = x: x (builtins.mapAttrs (k: v: { inherit lib config pkgs utils router-lib; }.${k}) (builtins.functionArgs x));
-  importModule = x: callModule (import x);
 in {
-  imports = map importModule [
+  imports = [
     ./modules/hostapd.nix
     ./modules/kea.nix
     ./modules/radvd.nix
@@ -518,6 +516,10 @@ in {
   };
 
   config = lib.mkIf cfg.enable (lib.mkMerge [ {
+    _module.args = {
+      inherit router-lib;
+    };
+
     environment.systemPackages = with pkgs; [
       bind
       conntrack-tools

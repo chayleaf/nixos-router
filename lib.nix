@@ -24,9 +24,9 @@ let
       updateCur = n == 0;
       newCurLen = if updateCur then curLen + 1 else 0;
       # prefer :: in the middle, as it saves more space (a::b vs ::a:b/a:b::)
-      updateMax = maxLen > newCurLen || (maxLen == newCurLen && maxStart <= 0);
+      updateMax = newCurLen > maxLen || (maxLen == newCurLen && maxStart <= 0);
       newCurStart = if updateCur then (if curStart == -1 then i else curStart) else -1;
-    in {
+    in { 
       i = i + 1;
       curLen = newCurLen;
       curStart = newCurStart;
@@ -133,34 +133,36 @@ in lib.optionalAttrs (config != null && utils != null) rec {
   invMask = mask: if builtins.length mask == 4 then invMask4 mask else invMask6 mask;
 
   ip4Regex = let
-    compRegex = "(25[0-5]|(2[0-4]|1[0-9]|[1-9]?)[0-9])";
+    compRegex = "(25[0-5]|(2[0-4]|10|1?[1-9])?[0-9])";
   in "(${compRegex}\\.){3}${compRegex}";
 
   cidr4Regex = "${ip4Regex}/(3[0-2]|[1-2]?[0-9])";
 
   ip6Regex = let
-    compRegex = "([1-9a-f]([0-9a-f]([0-9a-f][0-9a-f]?)?)?|0)";
-    # exactly n components
-    compExact = n: if n == 1 then compRegex
-      else "(${compRegex}:){${toString (n - 1)}}${compRegex}";
-    # up to n components
-    compUpTo = n: if n == 1 then "${compRegex}?"
-      else if n == 2 then "((${compRegex}:)?${compRegex})?"
-      else "((${compRegex}:){0,${toString (n - 1)}}${compRegex})?";
+    compRegex = "([1-9a-f][0-9a-f]{0,3}|0)";
+    compStartRegex = "([1-9a-f][0-9a-f]{0,3}:|0:)";
+    # exactly n components with trailing :
+    compStartExact = n: if n == 1 then "${compRegex}:"
+      else "${compStartRegex}{${toString n}}";
+    # up to n components with leading :
+    compEndUpTo = n: if n == 1 then ":${compRegex}?"
+      else if n == 2 then ":(${compStartRegex}?${compRegex})?"
+      else ":(${compStartRegex}{0,${toString (n - 1)}}${compRegex})?";
   in builtins.concatStringsSep "|" [
-    "::"
-    (compExact 8)
-    (compExact 7 + "::")
-    (compExact 6 + "::" + compUpTo 1)
-    (compExact 5 + "::" + compUpTo 2)
-    (compExact 4 + "::" + compUpTo 3)
-    (compExact 3 + "::" + compUpTo 4)
-    (compExact 2 + "::" + compUpTo 5)
-    (compExact 1 + "::" + compUpTo 6)
-    ("::" + compUpTo 7)
+    # the end is either :: or :${compRegex}
+    "${compStartExact 7}(${compRegex}|:)"
+    # there's :: in the middle
+    (compStartExact 6 + compEndUpTo 1)
+    (compStartExact 5 + compEndUpTo 2)
+    (compStartExact 4 + compEndUpTo 3)
+    (compStartExact 3 + compEndUpTo 4)
+    (compStartExact 2 + compEndUpTo 5)
+    (compStartExact 1 + compEndUpTo 6)
+    # there's :: at the start
+    (":" + compEndUpTo 7)
   ];
 
-  cidr6Regex = "(${ip6Regex})/(12[0-8]|(10|11|[1-9]?)[0-9])";
+  cidr6Regex = "(${ip6Regex})/(12[0-8]|(1[01]|[1-9]?)[0-9])";
 
   types = {
     ipv4 = lib.types.strMatching ip4Regex;
