@@ -30,7 +30,7 @@ in {
               prefix = "${if builtins.isString gateway then gateway else gateway.address}/${toString (if gateway.prefixLength or null != null then gateway.prefixLength else prefixLength)}";
             } // (gateway.coreradSettings or { })) gateways) icfg.ipv6.addresses);
             rdnss = builtins.concatLists (map ({ dns, ... }: map (dns: {
-              servers = if builtins.isString dns then dns else dns.address;
+              servers = if builtins.isString dns then [ dns ] else [ dns.address ];
             } // (dns.coreradSettings or { })) dns) icfg.ipv6.addresses);
           } // cfg.interfaceSettings)
         ];
