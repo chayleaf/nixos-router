@@ -22,8 +22,15 @@ in {
       configFile = if cfg.configFile != null then cfg.configFile else settingsFormat.generate "corerad-${interface}.toml" ({
         interfaces = [
           (ifaceConfig // {
-            prefix = map ({ address, prefixLength, coreradSettings, ... }: {
-              prefix = "${address}/${toString prefixLength}";
+            prefix = map ({ address, prefixLength, coreradSettings, ... }: let
+              subnetMask = router-lib.genMask6 prefixLength;
+              andMask = lib.zipListsWith builtins.bitAnd;
+              parsed = router-lib.parseIp6 address;
+            in {
+              prefix = router-lib.serializeCidr {
+                address = router-lib.serializeIp6 (andMask subnetMask parsed);
+                inherit prefixLength;
+              };
               autonomous = !ifaceConfig.managed;
             } // coreradSettings) icfg.ipv6.addresses;
             route = builtins.concatLists (map ({ address, prefixLength, gateways, ... }: map (gateway: {
