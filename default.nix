@@ -665,7 +665,7 @@ in {
       name = "${escapedInterface}-netdev";
       value = router-lib.mkServiceForIf' { inherit interface; includeBasicDeps = false; } {
         description = "Router Bridge Interface ${interface}";
-        wantedBy = [ "network-setup.service" "sys-subsystem-net-devices-${escapedInterface}.device" ];
+        wantedBy = [ "network-setup.service" "network.target" "sys-subsystem-net-devices-${escapedInterface}.device" ];
         partOf = [ "network-setup.service" ];
         after = [ "network-pre.target" ]
           # soft dependency, order it but don't require
@@ -710,6 +710,7 @@ in {
         description = "Virtual Ethernet Interfaces ${interface}/${value.peerName}";
         wantedBy = [
           "network-setup.service"
+          "network.target"
           "sys-subsystem-net-devices-${escapedInterface}.device"
           "sys-subsystem-net-devices-${escapedPeerInterface}.device"
         ];
@@ -841,9 +842,14 @@ in {
       (name: value: {
         "nftables-netns-${name}" = {
           description = "nftables firewall for network namespace ${name}";
-          wantedBy = [ "network.target" ];
-          before = [ "network-setup.service" ];
-          after = [ "network-pre.target" "netns-${name}.service" ];
+          wantedBy = [ "network-online.target" ];
+          before = [ "network-online.target" ];
+          # only do it after all interfaces have been brought online, since
+          # nftables may fail otherwise
+          # XXX: is running in network-pre and restarting on fail a couple times
+          #      more resilient for some configs? I don't know, so I'm leaving
+          #      this "cleaner" solution here
+          after = [ "network.target" "netns-${name}.service" ];
           bindsTo = [ "netns-${name}.service" ];
           script = mkNftStartCmd value;
           reload = mkNftStartCmd value;
