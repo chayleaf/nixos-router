@@ -211,11 +211,21 @@ in {
           type = with lib.types; nullOr str;
         };
         options.systemdLinkLinkConfig = lib.mkOption {
+          visible = false;
+          default = null;
+          type = with lib.types; nullOr attrs;
+        };
+        options.systemdLinkMatchConfig = lib.mkOption {
+          visible = false;
+          default = null;
+          type = with lib.types; nullOr attrs;
+        };
+        options.systemdLink.linkConfig = lib.mkOption {
           description = "This device's systemd.link(5) link config";
           default = { };
           type = lib.types.attrs;
         };
-        options.systemdLinkMatchConfig = lib.mkOption {
+        options.systemdLink.matchConfig = lib.mkOption {
           description = "This device's systemd.link(5) match config";
           default = { };
           type = lib.types.attrs;
@@ -881,10 +891,15 @@ in {
       name = "40-${name}";
       value = {
         matchConfig =
-          if value.systemdLinkMatchConfig == { }
+          if value.systemdLinkMatchConfig != null
+          then throw "Please use systemdLink.matchConfig instead of systemdLinkMatchConfig"
+          else if value.systemdLink.matchConfig == { }
           then { OriginalName = name; }
-          else value.systemdLinkMatchConfig;
-        linkConfig = value.systemdLinkLinkConfig;
+          else value.systemdLink.matchConfig;
+        linkConfig =
+          if value.systemdLinkLinkConfig != null
+          then throw "Please use systemdLink.linkConfig instead of systemdLinkLinkConfig"
+          else value.systemdLink.linkConfig;
       };
     });
     networking.useDHCP = lib.mkIf (builtins.any (x: x.dhcpcd.enable) (builtins.attrValues cfg.interfaces)) false;

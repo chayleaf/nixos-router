@@ -32,7 +32,7 @@ like... most parts of this repo.
 
 When [this](https://github.com/systemd/systemd/issues/11103) gets
 closed, I might be able to migrate to systemd-networkd. This may be the
-time when NixOS and this repo become compatible again.
+time when `networking.interfaces` and this repo become compatible again.
 
 This module expects you to use nftables, so it modifies NixOS's default
 settings to use nftables. Firewall is still set to use iptables, but if
@@ -109,10 +109,10 @@ Why not create a HTML page for this? Because I'm lazy.
       `service` and the rest being attrs to to pass to
       `router-lib.mkServiceForIf'`, for example, you can set `inNetns`
       to false to not use this interface's network namespace.
-  - `<iface>.systemdLinkLinkConfig` - values to add to
+  - `<iface>.systemdLink.linkConfig` - values to add to
     [systemd.link(5)](https://www.freedesktop.org/software/systemd/man/systemd.link.html)
     `[Link]` config for this interface
-  - `<iface>.systemdLinkMatchConfig` - values to add to
+  - `<iface>.systemdLink.matchConfig` - values to add to
     [systemd.link(5)](https://www.freedesktop.org/software/systemd/man/systemd.link.html)
     `[Match]` config for this interface. Defaults to `{ OriginalName =
     "<interface name>"; }`
