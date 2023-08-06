@@ -18,50 +18,57 @@ let
     haveStopJsonFile = attrs.nftables.stopJsonFile != null;
     haveStopJsonRules = attrs.nftables.stopJsonRules != null;
     jsonAfter = haveStopTextRules;
+    # "injection" is adding stop rules before start rules in the same file
     injectStopRules =
-      # if stop files are used, call stop explicitly
-      !haveStopTextFile && !haveStopJsonFile
-      # if text/json stop rules exist, ensure associated text/json start rules exist 
-      && (haveStopTextRules -> haveTextRules) && (haveStopJsonRules -> haveJsonRules)
-      # if text rules AND json rules are set, call stop explicitly
-      && (haveStopTextRules -> !haveStopJsonRules);
-    stopRulesEmpty = !haveStopJsonRules && !haveStopTextRules && !haveStopTextFile && !haveStopJsonFile;
+      # make sure there's exactly one set of rules to inject to,
+      # since all stop rules must run before all start rules
+      (haveJsonRules != haveTextRules)
+      # if stop files are used, don't inject, since we can't inject anything to files
+      # well, we can for text files, but it's a pita
+      && !haveStopTextFile && !haveStopJsonFile
+      # if text/json stop rules exist, ensure the text/json start rules to inject to exist
+      && (haveStopTextRules -> haveTextRules) && (haveStopJsonRules -> haveJsonRules);
     nft = "${pkgs.nftables}/bin/nft";
+    fallback = d: x: if x != null then x else d;
   in ''
-    ${lib.optionalString stopRulesEmpty "${nft} ${nftFlags} flush ruleset"}
-    ${lib.optionalString (!stopRulesEmpty && !injectStopRules) (mkNftStopCmd attrs)}
+    ${lib.optionalString (!injectStopRules) (mkNftStopCmd attrs)}
     ${lib.optionalString (!jsonAfter && haveJsonRules) "${nft} -j ${nftFlags} -f ${pkgs.writeTextFile {
       name = "nftables-ruleset.json";
       text = builtins.toJSON {
-        nftables = (if injectStopRules && haveStopJsonRules
-                    then attrs.nftables.stopJsonRules.nftables
-                    else [])
+        nftables = (lib.optionals injectStopRules (attrs.nftables.stopJsonRules.nftables or [ { flush.ruleset = null; } ]))
                    ++ attrs.nftables.jsonRules.nftables;
       };
     }}"}
     ${lib.optionalString haveTextRules "${nft} ${nftFlags} -f ${pkgs.writeTextFile {
       name = "nftables-ruleset.nft";
-      text = (if injectStopRules && haveStopTextRules
-              then attrs.nftables.stopTextRules + "\n"
-              else "") + attrs.nftables.textRules;
+      text = (lib.optionalString injectStopRules ((fallback "flush ruleset" attrs.nftables.stopTextRules) + "\n"))
+             + attrs.nftables.textRules;
     }}"}
     ${lib.optionalString haveTextFile "${nft} ${nftFlags} -f ${attrs.nftables.textFile}"}
     ${lib.optionalString haveJsonFile "${nft} -j ${nftFlags} -f ${attrs.nftables.jsonFile}"}
     ${lib.optionalString (jsonAfter && haveJsonRules) "${nft} -j ${nftFlags} -f ${pkgs.writeTextFile {
       name = "nftables-ruleset.json";
       text = builtins.toJSON {
-        nftables = (if injectStopRules && haveStopJsonRules then attrs.nftables.stopJsonRules.nftables else []) ++ attrs.nftables.jsonRules.nftables;
+        nftables = (lib.optionals injectStopRules (attrs.nftables.stopJsonRules.nftables or [ { flush.ruleset = null; } ]))
+                   ++ attrs.nftables.jsonRules.nftables;
       };
     }}"}
   '';
-  mkNftStopCmd = attrs: ''
-    ${lib.optionalString (attrs.nftables.stopTextFile != null) "${pkgs.nftables}/bin/nft ${nftFlags} -f ${attrs.nftables.stopTextFile}"}
-    ${lib.optionalString (attrs.nftables.stopTextRules != null) "${pkgs.nftables}/bin/nft ${nftFlags} -f ${pkgs.writeTextFile {
+  mkNftStopCmd = attrs: let
+    haveStopTextFile = attrs.nftables.stopTextFile != null;
+    haveStopTextRules = attrs.nftables.stopTextRules != null;
+    haveStopJsonFile = attrs.nftables.stopJsonFile != null;
+    haveStopJsonRules = attrs.nftables.stopJsonRules != null;
+    stopRulesEmpty = !haveStopJsonRules && !haveStopTextRules && !haveStopTextFile && !haveStopJsonFile;
+  in ''
+    ${lib.optionalString stopRulesEmpty "${pkgs.nftables}/bin/nft ${nftFlags} flush ruleset"}
+    ${lib.optionalString haveStopTextFile "${pkgs.nftables}/bin/nft ${nftFlags} -f ${attrs.nftables.stopTextFile}"}
+    ${lib.optionalString haveStopTextRules "${pkgs.nftables}/bin/nft ${nftFlags} -f ${pkgs.writeTextFile {
       name = "nftables-ruleset.nft";
       text = attrs.nftables.stopTextRules;
     }}"}
-    ${lib.optionalString (attrs.nftables.stopJsonFile != null) "${pkgs.nftables}/bin/nft -j ${nftFlags} -f ${attrs.nftables.stopJsonFile}"}
-    ${lib.optionalString (attrs.nftables.stopJsonRules != null) "${pkgs.nftables}/bin/nft -j ${nftFlags} -f ${pkgs.writeTextFile {
+    ${lib.optionalString haveStopJsonFile "${pkgs.nftables}/bin/nft -j ${nftFlags} -f ${attrs.nftables.stopJsonFile}"}
+    ${lib.optionalString haveStopJsonRules "${pkgs.nftables}/bin/nft -j ${nftFlags} -f ${pkgs.writeTextFile {
       name = "nftables-ruleset.json";
       text = builtins.toJSON attrs.nftables.stopJsonRules;
     }}"}
