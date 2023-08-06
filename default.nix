@@ -18,13 +18,14 @@ let
     haveStopJsonFile = attrs.nftables.stopJsonFile != null;
     haveStopJsonRules = attrs.nftables.stopJsonRules != null;
     jsonAfter = haveStopTextRules;
-    # "injection" is adding stop rules before start rules in the same file
+    # whether to inject text file rules into the text rules
+    injectTextFile = haveTextFile && haveTextRules;
+    # whether to inject stop rules before start rules
     injectStopRules =
       # make sure there's exactly one set of rules to inject to,
       # since all stop rules must run before all start rules
       (haveJsonRules != haveTextRules)
       # if stop files are used, don't inject, since we can't inject anything to files
-      # well, we can for text files, but it's a pita
       && !haveStopTextFile && !haveStopJsonFile
       # if text/json stop rules exist, ensure the text/json start rules to inject to exist
       && (haveStopTextRules -> haveTextRules) && (haveStopJsonRules -> haveJsonRules);
@@ -42,9 +43,10 @@ let
     ${lib.optionalString haveTextRules "${nft} ${nftFlags} -f ${pkgs.writeTextFile {
       name = "nftables-ruleset.nft";
       text = (lib.optionalString injectStopRules ((fallback "flush ruleset" attrs.nftables.stopTextRules) + "\n"))
+             + (lib.optionalString injectTextFile "include \"${attrs.nftables.textFile}\"\n")
              + attrs.nftables.textRules;
     }}"}
-    ${lib.optionalString haveTextFile "${nft} ${nftFlags} -f ${attrs.nftables.textFile}"}
+    ${lib.optionalString (haveTextFile && !injectTextFile) "${nft} ${nftFlags} -f ${attrs.nftables.textFile}"}
     ${lib.optionalString haveJsonFile "${nft} -j ${nftFlags} -f ${attrs.nftables.jsonFile}"}
     ${lib.optionalString (jsonAfter && haveJsonRules) "${nft} -j ${nftFlags} -f ${pkgs.writeTextFile {
       name = "nftables-ruleset.json";
