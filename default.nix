@@ -476,7 +476,7 @@ in {
 
     boot.kernel.sysctl = {
       "net.netfilter.nf_log_all_netns" = true;
-    } // builtins.zipAttrsWith (k: builtins.head) (lib.flip lib.mapAttrsToList cfg.interfaces (name: icfg:
+    } // router-lib.zipHeads (lib.flip lib.mapAttrsToList cfg.interfaces (name: icfg:
       lib.optionalAttrs (icfg.ipv4.rpFilter != null) {
         "net.ipv4.conf.${name}.rp_filter" = icfg.ipv4.rpFilter;
       } // lib.optionalAttrs icfg.ipv4.enableForwarding {
@@ -773,7 +773,7 @@ in {
         partOf = map (name: "network-addresses-${utils.escapeSystemdPath name}.service") (builtins.attrNames cfg.interfaces);
       };
     }
-    // builtins.zipAttrsWith (k: builtins.head) (builtins.concatLists (lib.mapAttrsToList (interface: icfg: map (service: {
+    // router-lib.zipHeads (builtins.concatLists (lib.mapAttrsToList (interface: icfg: map (service: {
       ${service.service or service} =
         if builtins.isString service then router-lib.mkServiceForIf interface { }
         else router-lib.mkServiceForIf' (builtins.removeAttrs service [ "service" ] // { inherit interface; }) { };

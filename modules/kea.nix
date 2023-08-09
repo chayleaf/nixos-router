@@ -27,8 +27,6 @@ let
       if x > 0 && n0 >= 65535 then null
       else if x < 0 && n0 < 2 then null
       else lib.init ip ++ [ n ];
-  orMask = lib.zipListsWith builtins.bitOr;
-  andMask = lib.zipListsWith builtins.bitAnd;
   format = pkgs.formats.json {};
   package = pkgs.kea;
   commonServiceConfig = {
@@ -59,8 +57,8 @@ in {
           let
             subnetMask = router-lib.genMask4 prefixLength;
             parsed = router-lib.parseIp4 address;
-            minIp = andMask subnetMask parsed;
-            maxIp = orMask (router-lib.invMask4 subnetMask) parsed;
+            minIp = router-lib.andMask subnetMask parsed;
+            maxIp = router-lib.orMask (router-lib.invMask4 subnetMask) parsed;
           in {
             inherit interface;
             subnet = router-lib.serializeCidr { inherit address prefixLength; };
@@ -139,8 +137,8 @@ in {
           let
             subnetMask = router-lib.genMask6 prefixLength;
             parsed = router-lib.parseIp6 address;
-            minIp = andMask subnetMask parsed;
-            maxIp = orMask (router-lib.invMask6 subnetMask) parsed;
+            minIp = router-lib.andMask subnetMask parsed;
+            maxIp = router-lib.orMask (router-lib.invMask6 subnetMask) parsed;
           in {
             inherit interface;
             option-data =

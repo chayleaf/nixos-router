@@ -7,13 +7,6 @@
 
 let
   cfg = config.router;
-  andMask = { address, prefixLength }: let
-    subnetMask = router-lib.genMask6 prefixLength;
-    parsed = router-lib.parseIp6 address;
-  in {
-    address = router-lib.serializeIp6 (lib.zipListsWith builtins.bitAnd subnetMask parsed);
-    inherit prefixLength;
-  };
 in {
   config = lib.mkIf cfg.enable {
     systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg: let
@@ -30,11 +23,11 @@ in {
         interfaces = [
           (ifaceConfig // {
             prefix = map ({ address, prefixLength, coreradSettings, ... }: {
-              prefix = router-lib.serializeCidr (andMask { inherit address prefixLength; });
+              prefix = router-lib.serializeCidr (router-lib.applyMask { inherit address prefixLength; });
               autonomous = !ifaceConfig.managed;
             } // coreradSettings) icfg.ipv6.addresses;
             route = builtins.concatLists (map ({ address, prefixLength, gateways, ... }: map (gateway: {
-              prefix = router-lib.serializeCidr (andMask {
+              prefix = router-lib.serializeCidr (router-lib.applyMask {
                 address = if builtins.isString gateway then gateway else gateway.address;
                 prefixLength = if gateway.prefixLength or null != null then gateway.prefixLength else prefixLength;
               });

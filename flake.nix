@@ -10,13 +10,11 @@
         pkgs = import nixpkgs { inherit system; };
       });
     in
-    rec {
-      # the format isn't the regular "lib" format, so this is marked "non-standard"
-      # you have to pass config, lib and utils from NixOS module system to it
-      # this is unsupported, but might be still useful overall
-      nonStandardLib = import ./lib.nix;
-      # this is the standard library for dealing with ip addresses
-      lib = forEachSystem ({ ... }: nonStandardLib { inherit (nixpkgs) lib; });
+    {
+      # This is the standard library for dealing with ip addresses.
+      # Changes to it aren't considered breaking, but of course I won't
+      # change it for no reason.
+      lib = forEachSystem ({ ... }: import ./lib.nix { inherit (nixpkgs) lib; });
       nixosModules.default = import ./.;
       checks.x86_64-linux.default = let pkgs = nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./checks.nix {
         inherit nixpkgs;

@@ -1,6 +1,7 @@
 { lib
 , config
 , pkgs
+, router-lib
 , ... }:
 
 let
@@ -106,7 +107,7 @@ in {
       services.fail2ban.packageFirewall = lib.mkDefault pkgs.nftables;
       services.opensnitch.settings.Firewall = lib.mkDefault "nftables";
       systemd.services = 
-        builtins.zipAttrsWith (k: builtins.head) (lib.flip lib.mapAttrsToList
+        router-lib.zipHeads (lib.flip lib.mapAttrsToList
           (lib.filterAttrs (_: hasNftablesRules) cfg.networkNamespaces)
           (name: value: {
             "nftables-netns-${name}" = {

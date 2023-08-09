@@ -102,6 +102,9 @@ in lib.optionalAttrs (config != null && utils != null) rec {
   # parses a decimal number
   parseDec = builtins.fromJSON;
 
+  # zip attrs, taking one attr value for each key
+  zipHeads = builtins.zipAttrsWith (_: builtins.head);
+
   # generate 0b11111...
   gen1Bits = count:
     if count == 0 then 0 else (gen1Bits (count - 1)) * 2 + 1;
@@ -130,7 +133,21 @@ in lib.optionalAttrs (config != null && utils != null) rec {
   # invert a mask
   invMask4 = map (builtins.bitXor 255);
   invMask6 = map (builtins.bitXor 65535);
-  invMask = mask: if builtins.length mask == 4 then invMask4 mask else invMask6 mask;
+  invMask = mask: (if builtins.length mask == 4 then invMask4 else invMask6) mask;
+
+  # deserialized mask operations
+  orMask = lib.zipListsWith builtins.bitOr;
+  andMask = lib.zipListsWith builtins.bitAnd;
+
+  # serialized mask operations
+  # applyMask - throw away any bits after prefixLength
+  applyMask = { address, prefixLength }: let
+    parsed = parseIp address;
+    subnetMask = (if builtins.length parsed == 4 then genMask4 else genMask6) prefixLength;
+  in {
+    address = serializeIp (andMask subnetMask parsed);
+    inherit prefixLength;
+  };
 
   ip4Regex = let
     compRegex = "(25[0-5]|(2[0-4]|10|1?[1-9])?[0-9])";
@@ -197,7 +214,7 @@ in lib.optionalAttrs (config != null && utils != null) rec {
       else join (lib.take maxStart hextets) + "::" + join (lib.drop (maxStart + maxLen) hextets);
 
   parseIp = s: if lib.hasInfix ":" s then parseIp6 s else parseIp4 s;
-  serializeIp = x: if builtins.length x == 4 then serializeIp4 x else serializeIp6 x;
+  serializeIp = x: (if builtins.length x == 4 then serializeIp4 else serializeIp6) x;
 
   # returns { address, prefixLength }
   parseCidr = cidr: let split = lib.splitString "/" cidr; in {
