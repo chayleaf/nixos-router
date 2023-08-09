@@ -7,83 +7,6 @@
 let
   notnft = config._module.args.notnft or config.notnft or null;
   cfg = config.router;
-  nftFlags = "";
-  mkNftStartCmd = attrs: let
-    haveTextFile = attrs.nftables.textFile != null;
-    haveTextRules = attrs.nftables.textRules != null;
-    haveStopTextFile = attrs.nftables.stopTextFile != null;
-    haveStopTextRules = attrs.nftables.stopTextRules != null;
-    haveJsonFile = attrs.nftables.jsonFile != null;
-    haveJsonRules = attrs.nftables.jsonRules != null;
-    haveStopJsonFile = attrs.nftables.stopJsonFile != null;
-    haveStopJsonRules = attrs.nftables.stopJsonRules != null;
-    jsonAfter = haveStopTextRules;
-    # whether to inject text file rules into the text rules
-    injectTextFile = haveTextFile && haveTextRules;
-    # whether to inject stop rules before start rules
-    injectStopRules =
-      # make sure there's exactly one set of rules to inject to,
-      # since all stop rules must run before all start rules
-      (haveJsonRules != haveTextRules)
-      # if stop files are used, don't inject, since we can't inject anything to files
-      && !haveStopTextFile && !haveStopJsonFile
-      # if text/json stop rules exist, ensure the text/json start rules to inject to exist
-      && (haveStopTextRules -> haveTextRules) && (haveStopJsonRules -> haveJsonRules);
-    nft = "${pkgs.nftables}/bin/nft";
-    fallback = d: x: if x != null then x else d;
-  in ''
-    ${lib.optionalString (!injectStopRules) (mkNftStopCmd attrs)}
-    ${lib.optionalString (!jsonAfter && haveJsonRules) "${nft} -j ${nftFlags} -f ${pkgs.writeTextFile {
-      name = "nftables-ruleset.json";
-      text = builtins.toJSON {
-        nftables = (lib.optionals injectStopRules (attrs.nftables.stopJsonRules.nftables or [ { flush.ruleset = null; } ]))
-                   ++ attrs.nftables.jsonRules.nftables;
-      };
-    }}"}
-    ${lib.optionalString haveTextRules "${nft} ${nftFlags} -f ${pkgs.writeTextFile {
-      name = "nftables-ruleset.nft";
-      text = (lib.optionalString injectStopRules ((fallback "flush ruleset" attrs.nftables.stopTextRules) + "\n"))
-             + (lib.optionalString injectTextFile "include \"${attrs.nftables.textFile}\"\n")
-             + attrs.nftables.textRules;
-    }}"}
-    ${lib.optionalString (haveTextFile && !injectTextFile) "${nft} ${nftFlags} -f ${attrs.nftables.textFile}"}
-    ${lib.optionalString haveJsonFile "${nft} -j ${nftFlags} -f ${attrs.nftables.jsonFile}"}
-    ${lib.optionalString (jsonAfter && haveJsonRules) "${nft} -j ${nftFlags} -f ${pkgs.writeTextFile {
-      name = "nftables-ruleset.json";
-      text = builtins.toJSON {
-        nftables = (lib.optionals injectStopRules (attrs.nftables.stopJsonRules.nftables or [ { flush.ruleset = null; } ]))
-                   ++ attrs.nftables.jsonRules.nftables;
-      };
-    }}"}
-  '';
-  mkNftStopCmd = attrs: let
-    haveStopTextFile = attrs.nftables.stopTextFile != null;
-    haveStopTextRules = attrs.nftables.stopTextRules != null;
-    haveStopJsonFile = attrs.nftables.stopJsonFile != null;
-    haveStopJsonRules = attrs.nftables.stopJsonRules != null;
-    stopRulesEmpty = !haveStopJsonRules && !haveStopTextRules && !haveStopTextFile && !haveStopJsonFile;
-  in ''
-    ${lib.optionalString stopRulesEmpty "${pkgs.nftables}/bin/nft ${nftFlags} flush ruleset"}
-    ${lib.optionalString haveStopTextFile "${pkgs.nftables}/bin/nft ${nftFlags} -f ${attrs.nftables.stopTextFile}"}
-    ${lib.optionalString haveStopTextRules "${pkgs.nftables}/bin/nft ${nftFlags} -f ${pkgs.writeTextFile {
-      name = "nftables-ruleset.nft";
-      text = attrs.nftables.stopTextRules;
-    }}"}
-    ${lib.optionalString haveStopJsonFile "${pkgs.nftables}/bin/nft -j ${nftFlags} -f ${attrs.nftables.stopJsonFile}"}
-    ${lib.optionalString haveStopJsonRules "${pkgs.nftables}/bin/nft -j ${nftFlags} -f ${pkgs.writeTextFile {
-      name = "nftables-ruleset.json";
-      text = builtins.toJSON attrs.nftables.stopJsonRules;
-    }}"}
-  '';
-  hasNftablesRules = x:
-    x.nftables.textFile != null
-    || x.nftables.textRules != null
-    || x.nftables.jsonFile != null
-    || x.nftables.jsonRules != null
-    || x.nftables.stopTextFile != null
-    || x.nftables.stopTextRules != null
-    || x.nftables.stopJsonFile != null
-    || x.nftables.stopJsonRules != null;
   nftType = extraDesc: extraStopDesc: lib.types.submodule {
     options.textFile = lib.mkOption {
       description = "Text rules file to run${extraDesc}.";
@@ -132,8 +55,6 @@ let
       (interface: icfg: if icfg.bridge == null || icfg.hostapd.enable then { } else {
         ${icfg.bridge} = interface;
       }) cfg.interfaces);
-  systemHasNftables = config.networking.nftables.enable
-    || builtins.any hasNftablesRules (builtins.attrValues cfg.networkNamespaces);
   router-lib = import ./lib.nix {
     inherit lib config utils;
   };
@@ -141,6 +62,7 @@ in {
   imports = [
     ./modules/hostapd.nix
     ./modules/kea.nix
+    ./modules/nftables.nix
     ./modules/radvd.nix
     ./modules/corerad.nix
     ./modules/dhcpcd.nix
@@ -534,7 +456,7 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [ {
+  config = lib.mkIf cfg.enable {
     _module.args = {
       inherit router-lib;
     };
@@ -544,11 +466,8 @@ in {
       conntrack-tools
       dig.dnsutils
       ethtool
-      nftables
       tcpdump
     ];
-
-    boot.blacklistedKernelModules = lib.optional systemHasNftables "ip_tables";
 
     # performance tweaks
     powerManagement.cpuFreqGovernor = lib.mkDefault "ondemand";
@@ -570,13 +489,6 @@ in {
     networking.firewall.filterForward = lib.mkDefault false;
     networking.firewall.allowPing = lib.mkDefault true;
     networking.firewall.rejectPackets = lib.mkDefault false; # drop rather than reject
-    # networking.firewall.package = lib.mkIf systemHasNftables (lib.mkDefault pkgs.nftables);
-    # ^ it uses networking.nftables, so i don't touch it
-    networking.networkmanager.firewallBackend = lib.mkIf systemHasNftables (lib.mkDefault "nftables");
-    services.fail2ban.banaction = lib.mkIf systemHasNftables (lib.mkDefault "nftables-multiport");
-    services.fail2ban.banaction-allports = lib.mkIf systemHasNftables (lib.mkDefault "nftables-allport");
-    services.fail2ban.packageFirewall = lib.mkIf systemHasNftables (lib.mkDefault pkgs.nftables);
-    services.opensnitch.settings.Firewall = lib.mkIf systemHasNftables (lib.mkDefault "nftables");
 
     router.networkNamespaces =
       builtins.zipAttrsWith (k: vs: { })
@@ -855,38 +767,17 @@ in {
           ip netns exec "${value.networkNamespace}" ip link set "${interface}" netns 1
         '';
       };
-    }) 
-    // builtins.zipAttrsWith (k: builtins.head) (lib.flip lib.mapAttrsToList
-      (lib.filterAttrs (_: hasNftablesRules) cfg.networkNamespaces)
-      (name: value: {
-        "nftables-netns-${name}" = {
-          description = "nftables firewall for network namespace ${name}";
-          wantedBy = [ "network-online.target" ];
-          before = [ "network-online.target" ];
-          # only do it after all interfaces have been brought online, since
-          # nftables may fail otherwise
-          # XXX: is running in network-pre and restarting on fail a couple times
-          #      more resilient for some configs? I don't know, so I'm leaving
-          #      this "cleaner" solution here
-          after = [ "network.target" "netns-${name}.service" ];
-          bindsTo = [ "netns-${name}.service" ];
-          script = mkNftStartCmd value;
-          reload = mkNftStartCmd value;
-          preStop = mkNftStopCmd value;
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            NetworkNamespacePath = "/var/run/netns/${name}";
-          };
-          reloadIfChanged = true;
-        };
-      })
-    )
+    })
     // {
       network-setup = {
         partOf = map (name: "network-addresses-${utils.escapeSystemdPath name}.service") (builtins.attrNames cfg.interfaces);
       };
-    };
+    }
+    // builtins.zipAttrsWith (k: builtins.head) (builtins.concatLists (lib.mapAttrsToList (interface: icfg: map (service: {
+      ${service.service or service} =
+        if builtins.isString service then router-lib.mkServiceForIf interface { }
+        else router-lib.mkServiceForIf' (builtins.removeAttrs service [ "service" ] // { inherit interface; }) { };
+    }) icfg.dependentServices) cfg.interfaces));
     systemd.network.links = lib.flip lib.mapAttrs' cfg.interfaces (name: value: {
       name = "40-${name}";
       value = {
@@ -903,28 +794,5 @@ in {
       };
     });
     networking.useDHCP = lib.mkIf (builtins.any (x: x.dhcpcd.enable) (builtins.attrValues cfg.interfaces)) false;
-  }
-  {
-    systemd.services = builtins.zipAttrsWith (k: builtins.head) (builtins.concatLists (lib.mapAttrsToList (interface: icfg: map (service: {
-      ${service.service or service} =
-        if builtins.isString service then router-lib.mkServiceForIf interface { }
-        else router-lib.mkServiceForIf' (builtins.removeAttrs service [ "service" ] // { inherit interface; }) { };
-    }) icfg.dependentServices) cfg.interfaces));
-  }
-  (lib.mkIf config.networking.nftables.enable {
-    # a stub for compatibility with services that depend on networking.nftables
-    systemd.services.nftables = lib.mkForce {
-      description = "nftables stub";
-      bindsTo = [ "nftables-netns-default.service" ];
-      serviceConfig.Type = "oneshot";
-      serviceConfig.RemainAfterExit = true;
-      serviceConfig.ExecStart = "${pkgs.coreutils}/bin/true";
-    };
-    router.networkNamespaces.default = let
-      inherit (config.networking.nftables) ruleset rulesetFile;
-    in lib.mkIf (rulesetFile != null || ruleset != "") {
-      nftables.textRules = lib.mkIf (rulesetFile == null) ruleset;
-      nftables.textFile = lib.mkIf (rulesetFile != null) rulesetFile;
-    };
-  }) ]);
+  };
 }
