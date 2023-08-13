@@ -11,7 +11,7 @@ let
         fileSystems."/" = { device = "none"; fsType = "tmpfs"; neededForBoot = false; options = [ "defaults" "size=2G" "mode=755" ]; };
         boot.loader.grub.device = "nodev";
         router.enable = true;
-        networking.nftables.enable = true;
+        networking.nftables.enable = false;
       }
     ];
   }) config;

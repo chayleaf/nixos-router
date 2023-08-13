@@ -95,10 +95,16 @@ in {
       # separate this out so it doesn't depend on systemHasNftables
       networking.nftables.enable = lib.mkDefault config.networking.firewall.enable;
     })
+    (lib.mkIf (cfg.enable && config.networking.nftables.enable) {
+      router.networkNamespaces.default = let
+        inherit (config.networking.nftables) ruleset rulesetFile;
+      in lib.mkIf (rulesetFile != null || ruleset != "") {
+        nftables.textRules = lib.mkIf (rulesetFile == null) ruleset;
+        nftables.textFile = lib.mkIf (rulesetFile != null) rulesetFile;
+      };
+    })
     (lib.mkIf (cfg.enable && systemHasNftables) {
-      environment.systemPackages = [
-        pkgs.nftables
-      ];
+      environment.systemPackages = [ pkgs.nftables ];
       boot.blacklistedKernelModules = [ "ip_tables" ];
       # make the firewall use nftables by default
       networking.networkmanager.firewallBackend = lib.mkDefault "nftables";
@@ -142,12 +148,6 @@ in {
             serviceConfig.ExecStart = "${pkgs.coreutils}/bin/true";
           });
         };
-      router.networkNamespaces.default = let
-        inherit (config.networking.nftables) enable ruleset rulesetFile;
-      in lib.mkIf (enable && (rulesetFile != null || ruleset != "")) {
-        nftables.textRules = lib.mkIf (rulesetFile == null) ruleset;
-        nftables.textFile = lib.mkIf (rulesetFile != null) rulesetFile;
-      };
     })
   ];
 }
