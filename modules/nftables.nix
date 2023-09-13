@@ -57,6 +57,7 @@ let
     }}"}
   '';
 
+  # TODO: remember previous deletions
   mkNftStopCmd = attrs: let
     haveStopTextFile = attrs.nftables.stopTextFile != null;
     haveStopTextRules = attrs.nftables.stopTextRules != null;
@@ -87,8 +88,7 @@ let
     || x.nftables.stopJsonFile != null
     || x.nftables.stopJsonRules != null;
 
-  systemHasNftables = config.networking.nftables.enable
-    || builtins.any hasNftablesRules (builtins.attrValues cfg.networkNamespaces);
+  enableNftables = builtins.any hasNftablesRules (builtins.attrValues cfg.networkNamespaces);
 in {
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {
@@ -97,13 +97,29 @@ in {
     })
     (lib.mkIf (cfg.enable && config.networking.nftables.enable) {
       router.networkNamespaces.default = let
-        inherit (config.networking.nftables) ruleset rulesetFile;
-      in lib.mkIf (rulesetFile != null || ruleset != "") {
-        nftables.textRules = lib.mkIf (rulesetFile == null) ruleset;
+        inherit (config.networking.nftables) ruleset rulesetFile flushRuleset extraDeletions;
+        tables = lib.filterAttrs (_: t: t.enable) config.networking.nftables.tables;
+      in lib.mkIf (rulesetFile != null || ruleset != "" || tables != {}) {
+        nftables.textRules = lib.mkIf (ruleset != "" || tables != {}) ''
+          ${ruleset}
+          ${builtins.concatStringsSep "\n" (lib.mapAttrsToList (_: t: ''
+            table ${t.family} ${t.name} {
+            ${builtins.concatStringsSep "\n" (map (s: "  ${s}") (lib.splitString "\n" t.content))}
+            }
+          '') tables)}
+        '';
         nftables.textFile = lib.mkIf (rulesetFile != null) rulesetFile;
+        nftables.stopTextRules = lib.mkIf (!flushRuleset || extraDeletions != "") ''
+          ${if flushRuleset then "flush ruleset"
+            else builtins.concatStringsSep "\n" (lib.mapAttrsToList (_: t: ''
+              table ${t.family} ${t.name}
+              delete table ${t.family} ${t.name}
+            '') tables)}
+          ${extraDeletions}
+        '';
       };
     })
-    (lib.mkIf (cfg.enable && systemHasNftables) {
+    (lib.mkIf (cfg.enable && enableNftables) {
       environment.systemPackages = [ pkgs.nftables ];
       boot.blacklistedKernelModules = [ "ip_tables" ];
       # make the firewall use nftables by default
