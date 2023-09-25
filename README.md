@@ -101,6 +101,10 @@ Why not create a HTML page for this? Because I'm lazy.
     `networking.interfaces`, as both `router.interfaces` and
     `networking.interfaces` expect having to set the interfaces up.
   - `<iface>.bridge` - bridge name to enslave this device to
+  - `<iface>.vlans.*` - VLAN filtering configuration
+    - `<vlan>.vid` - VLAN id filter
+    - `<vlan>.untagged` - whether this should match untagged traffic
+      (defaults to false)
   - `<iface>.networkNamespace` - the network namespace where this device
     and all dependent services will run
   - `<iface>.dependentServices` - services that should depend on this
