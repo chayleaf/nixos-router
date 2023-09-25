@@ -54,7 +54,7 @@ let
   bridges = lib.zipAttrs
     (lib.mapAttrsToList
       (interface: icfg: if icfg.bridge == null || icfg.hostapd.enable then { } else {
-        ${icfg.bridge} = interface;
+        "${icfg.bridge.name}" = interface;
       })
       cfg.interfaces);
   router-lib = import ./lib.nix {
@@ -125,11 +125,33 @@ in
           default = [ ];
           type = with lib.types; listOf (either str attrs);
         };
+
         options.bridge = lib.mkOption {
           description = "Add this device to this bridge";
           default = null;
-          type = with lib.types; nullOr str;
+          type = with lib.types; nullOr (coercedTo str (name: { inherit name; }) (submodule {
+            options.name = lib.mkOption {
+              description = "Name of the bridge";
+              type = lib.types.str;
+            };
+            options.vlans = lib.mkOption {
+              description = "VLANs to add to this bridge";
+              default = [ ];
+              type = with lib.types; listOf (submodule {
+                options.vid = lib.mkOption {
+                  description = "VLAN id";
+                  type = lib.types.int;
+                };
+                options.untagged = lib.mkOption {
+                  description = "should this match untagged traffic";
+                  type = lib.types.bool;
+                  default = false;
+                };
+              });
+            };
+          }));
         };
+
         options.networkNamespace = lib.mkOption {
           description = "Network namespace name to create this device in";
           default = null;
@@ -536,7 +558,7 @@ in
                 state="/run/nixos/network/addresses/${interface}"
                 mkdir -p $(dirname "$state")
                 ${lib.optionalString (icfg.bridge != null && !icfg.hostapd.enable) ''
-                  ip link set "${interface}" master "${icfg.bridge}" up && echo "${interface} " >> "/run/${icfg.bridge}.interfaces" || true
+                  ip link set "${interface}" master "${icfg.bridge.name}" up && echo "${interface} " >> "/run/${icfg.bridge.name}.interfaces" || true
                 ''}
                 ip link set "${interface}" up
                 ${lib.flip lib.concatMapStrings ips (ip:
@@ -576,7 +598,7 @@ in
               preStop = ''
                 state="/run/nixos/network/routes/${interface}"
                 ${lib.optionalString (icfg.bridge != null && !icfg.hostapd.enable) ''
-                  ip link set "${interface}" nomaster up && echo "${interface} " >> "/run/${icfg.bridge}.interfaces" || true
+                  ip link set "${interface}" nomaster up && echo "${interface} " >> "/run/${icfg.bridge.name}.interfaces" || true
                 ''}
                 if [ -e "$state" ]; then
                   while read cmd; do
@@ -614,17 +636,41 @@ in
           serviceConfig.Type = "oneshot";
           serviceConfig.RemainAfterExit = true;
           path = [ pkgs.iproute2 ];
-          script = ''
-            ip link show dev "${interface}" >/dev/null 2>&1 && ip link del "${interface}" || true
-            echo "Adding bridge ${interface}..."
-            ip link add name "${interface}" type bridge
-            ip link set "${interface}" up
-            echo -n > "/run/${interface}.interfaces"
-            ${lib.concatMapStrings (i: ''
-              ip link set "${i}" master "${interface}" up && echo "${i} " >> "/run/${interface}.interfaces" || true
-            '') value}
-            ip link set "${interface}" up
-          '';
+          script =
+            let
+              vlan_filtering = builtins.any (x: config.router.interfaces.${x}.bridge.vlans != [ ]) value;
+            in
+            ''
+              ip link show dev "${interface}" >/dev/null 2>&1 && ip link del "${interface}" || true
+              echo "Adding bridge ${interface}..."
+              ip link add name "${interface}" type bridge
+
+              ${
+                lib.optionalString vlan_filtering ''
+                  ip link set dev "${interface}" type bridge vlan_filtering 1
+                  bridge vlan del dev "${interface}" vid 1 self
+                ''
+              }
+
+              ip link set "${interface}" up
+              echo -n > "/run/${interface}.interfaces"
+              ${lib.concatMapStrings (i: 
+              let 
+                bridge = config.router.interfaces.${i}.bridge;
+                vid_commands = lib.concatMapStrings (x: 
+                ''
+                  bridge vlan add dev "${i}" vid ${builtins.toString x.vid} ${lib.optionalString x.untagged "pvid untagged"}
+                '') bridge.vlans;
+              in 
+              ''
+                ip link set "${i}" master "${interface}" up && echo "${i} " >> "/run/${interface}.interfaces" || true
+                ${lib.optionalString vlan_filtering ''
+                  bridge vlan del dev "${i}" vid 1
+                  ${vid_commands}
+                ''}
+              '') value}
+              ip link set "${interface}" up
+            '';
           postStop = ''
             ip link set "${interface}" down || true
             ip link del "${interface}" || true

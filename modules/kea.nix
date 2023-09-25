@@ -107,7 +107,7 @@ in
       {
         environment.etc = lib.mapAttrs'
           (interface: icfg: {
-            name = "kea/dhcp4-server-${utils.escapeSystemdPath interface}.conf";
+            name = "kea/dhcp4-server-${interface}.conf";
             value = lib.mkIf (icfg.ipv4.kea.enable && icfg.ipv4.addresses != [ ]) {
               source = configs.${interface};
             };
@@ -191,7 +191,7 @@ in
       {
         environment.etc = lib.mapAttrs'
           (interface: icfg: {
-            name = "kea/dhcp6-server-${utils.escapeSystemdPath interface}.conf";
+            name = "kea/dhcp6-server-${interface}.conf";
             value = lib.mkIf (icfg.ipv6.kea.enable && icfg.ipv6.addresses != [ ]) {
               source = configs.${interface};
             };
