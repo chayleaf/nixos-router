@@ -100,11 +100,8 @@ Why not create a HTML page for this? Because I'm lazy.
     is incompatible with. This means you can't use it together with
     `networking.interfaces`, as both `router.interfaces` and
     `networking.interfaces` expect having to set the interfaces up.
-  - `<iface>.bridge` - If set to a string, sets `<iface>.bridge.name`
+  - `<iface>.bridge` - bridge name to enslave this device to
   - `<iface>.bridge.name` - bridge name to enslave this device to
-  - `<iface>.bridge.vlans` - vlan filtering configuration for this interface
-  - `<iface>.bridge.vlans[].vid` - setup filter for vlan id 
-  - `<iface>.bridge.vlans[].untagged` - also match untagged traffic
   - `<iface>.networkNamespace` - the network namespace where this device
     and all dependent services will run
   - `<iface>.dependentServices` - services that should depend on this
@@ -260,5 +257,9 @@ Why not create a HTML page for this? Because I'm lazy.
         default to true as well.
       - `<iface>.ipv6.corerad.settings` - general CoreRAD settings
         (useful for setting `debug` options)
+- `router.bridges.<name>` - per-bridge config
+  - `router.bridges.<name>.vlans` bridge VLAN filtering configuration
+  - `router.bridges.<name>.vlans.*.vid` add VLAN id filter for this interface
+  - `router.bridges.<name>.vlans.*.untagged` should also match untagged
 
 [Rendered options](OPTIONS.md)

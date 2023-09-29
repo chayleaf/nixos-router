@@ -1,5 +1,7 @@
 ## router\.enable
 
+
+
 Whether to enable router config\.
 
 
@@ -16,6 +18,83 @@ boolean
 
 *Example:*
 ` true `
+
+*Declared by:*
+ - [default\.nix](default.nix)
+
+
+
+## router\.bridges
+
+bridge config
+
+
+
+*Type:*
+attribute set of (submodule)
+
+
+
+*Default:*
+` { } `
+
+*Declared by:*
+ - [default\.nix](default.nix)
+
+
+
+## router\.bridges\.\<name>\.vlans
+
+
+
+VLANs to add to this bridge
+
+
+
+*Type:*
+attribute set of list of (submodule)
+
+
+
+*Default:*
+` { } `
+
+*Declared by:*
+ - [default\.nix](default.nix)
+
+
+
+## router\.bridges\.\<name>\.vlans\.\<name>\.\*\.untagged
+
+
+
+should this match untagged traffic
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+` false `
+
+*Declared by:*
+ - [default\.nix](default.nix)
+
+
+
+## router\.bridges\.\<name>\.vlans\.\<name>\.\*\.vid
+
+
+
+VLAN id
+
+
+
+*Type:*
+signed integer
 
 *Declared by:*
  - [default\.nix](default.nix)
@@ -52,86 +131,12 @@ Add this device to this bridge
 
 
 *Type:*
-null or ((submodule) or string convertible to it)
+null or string
 
 
 
 *Default:*
 ` null `
-
-*Declared by:*
- - [default\.nix](default.nix)
-
-
-
-## router\.interfaces\.\<name>\.bridge\.name
-
-
-
-Name of the bridge
-
-
-
-*Type:*
-string
-
-*Declared by:*
- - [default\.nix](default.nix)
-
-
-
-## router\.interfaces\.\<name>\.bridge\.vlans
-
-
-
-VLANs to add to this bridge
-
-
-
-*Type:*
-list of (submodule)
-
-
-
-*Default:*
-` [ ] `
-
-*Declared by:*
- - [default\.nix](default.nix)
-
-
-
-## router\.interfaces\.\<name>\.bridge\.vlans\.\*\.untagged
-
-
-
-should this match untagged traffic
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-*Declared by:*
- - [default\.nix](default.nix)
-
-
-
-## router\.interfaces\.\<name>\.bridge\.vlans\.\*\.vid
-
-
-
-VLAN id
-
-
-
-*Type:*
-signed integer
 
 *Declared by:*
  - [default\.nix](default.nix)
