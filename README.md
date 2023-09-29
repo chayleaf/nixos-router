@@ -256,3 +256,5 @@ Why not create a HTML page for this? Because I'm lazy.
         default to true as well.
       - `<iface>.ipv6.corerad.settings` - general CoreRAD settings
         (useful for setting `debug` options)
+
+[Rendered options](OPTIONS.md)

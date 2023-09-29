@@ -241,7 +241,7 @@ in
                 options.keaSettings = lib.mkOption {
                   default = { };
                   type = (pkgs.formats.json { }).type;
-                  example = lib.literalExpression {
+                  example = lib.options.renderOptionValue {
                     pools = [{ pool = "192.168.1.15 - 192.168.1.200"; }];
                     option-data = [{
                       name = "domain-name-servers";
@@ -327,7 +327,7 @@ in
                     options.radvdSettings = lib.mkOption {
                       default = { };
                       type = attrsOf (oneOf [ bool str int ]);
-                      example = lib.literalExpression {
+                      example = lib.options.renderOptionValue {
                         AdvRoutePreference = "high";
                       };
                       description = "radvd prefix-specific route settings";
@@ -335,7 +335,7 @@ in
                     options.coreradSettings = lib.mkOption {
                       default = { };
                       type = (pkgs.formats.toml { }).type;
-                      example = lib.literalExpression {
+                      example = lib.options.renderOptionValue {
                         preference = "high";
                       };
                       description = "CoreRAD prefix-specific route settings";
@@ -352,13 +352,13 @@ in
                     options.radvdSettings = lib.mkOption {
                       default = { };
                       type = attrsOf (oneOf [ bool str int ]);
-                      example = lib.literalExpression { FlushRDNSS = false; };
+                      example = lib.options.renderOptionValue { FlushRDNSS = false; };
                       description = "radvd prefix-specific RDNSS settings";
                     };
                     options.coreradSettings = lib.mkOption {
                       default = { };
                       type = (pkgs.formats.toml { }).type;
-                      example = lib.literalExpression { lifetime = "auto"; };
+                      example = lib.options.renderOptionValue { lifetime = "auto"; };
                       description = "CoreRAD prefix-specific RDNSS settings";
                     };
                   }));
@@ -367,7 +367,7 @@ in
                 options.keaSettings = lib.mkOption {
                   default = { };
                   type = (pkgs.formats.json { }).type;
-                  example = lib.literalExpression {
+                  example = lib.options.renderOptionValue {
                     pools = [{
                       pool = "fd01:: - fd01::ffff:ffff:ffff:ffff";
                     }];
@@ -384,7 +384,7 @@ in
                 options.radvdSettings = lib.mkOption {
                   default = { };
                   type = with lib.types; attrsOf (oneOf [ bool str int ]);
-                  example = lib.literalExpression {
+                  example = lib.options.renderOptionValue {
                     AdvOnLink = true;
                     AdvAutonomous = true;
                     Base6to4Interface = "ppp0";
@@ -394,7 +394,7 @@ in
                 options.coreradSettings = lib.mkOption {
                   default = { };
                   type = (pkgs.formats.toml { }).type;
-                  example = lib.literalExpression {
+                  example = lib.options.renderOptionValue {
                     on_link = true;
                     autonomous = true;
                   };
@@ -442,7 +442,7 @@ in
                 options.interfaceSettings = lib.mkOption {
                   default = { };
                   type = with lib.types; attrsOf (oneOf [ bool str int ]);
-                  example = lib.literalExpression {
+                  example = lib.options.renderOptionValue {
                     UnicastOnly = true;
                   };
                   description = "radvd interface-specific settings";
@@ -467,7 +467,7 @@ in
                 options.settings = lib.mkOption {
                   default = { };
                   type = (pkgs.formats.toml { }).type;
-                  example = lib.literalExpression {
+                  example = lib.options.renderOptionValue {
                     debug.address = "localhost:9430";
                     debug.prometheus = true;
                   };

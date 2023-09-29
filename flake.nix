@@ -10,7 +10,7 @@
         pkgs = import nixpkgs { inherit system; };
       });
     in
-    {
+    rec {
       # This is the standard library for dealing with ip addresses.
       # Changes to it aren't considered breaking, but of course I won't
       # change it for no reason.
@@ -20,5 +20,35 @@
       checks.x86_64-linux.default = let pkgs = nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./checks.nix {
         inherit nixpkgs;
       };
+      apps = forEachSystem (
+        ({ pkgs, system, ... }: {
+          make-docs =
+            let
+              eval = import (pkgs.path + "/nixos/lib/eval-config.nix") {
+                inherit system;
+                modules = [
+                  ./default.nix
+                ];
+              };
+            in
+            {
+              type = "app";
+              program = toString (pkgs.writers.writeBash "debug-router" ''
+                  cp "${(pkgs.nixosOptionsDoc {
+                  options = eval.options.router;
+                        transformOptions = opt: opt // (with nixpkgs.lib; {
+                        declarations = map (decl: if hasPrefix (toString ./.) (toString decl) then
+                        let 
+                          subpath = removePrefix "/" (removePrefix (toString ./.) (toString decl));
+                        in {
+                          url = "${subpath}"; name = subpath;
+                        } else decl) opt.declarations;
+                      });
+                }).optionsCommonMark}" OPTIONS.md
+                  chmod 644 OPTIONS.md
+              '');
+            };
+        })
+      );
     };
 }
