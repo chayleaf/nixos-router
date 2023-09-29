@@ -16,6 +16,7 @@
       # change it for no reason.
       lib = forEachSystem ({ ... }: import ./lib.nix { inherit (nixpkgs) lib; });
       nixosModules.default = import ./.;
+      formatter = forEachSystem ({ pkgs, ... }: pkgs.nixpkgs-fmt);
       checks.x86_64-linux.default = let pkgs = nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./checks.nix {
         inherit nixpkgs;
       };

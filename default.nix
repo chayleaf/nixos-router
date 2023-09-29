@@ -2,7 +2,8 @@
 , config
 , pkgs
 , utils
-, ... }:
+, ...
+}:
 
 let
   notnft = config._module.args.notnft or config.notnft or null;
@@ -25,7 +26,7 @@ let
     };
     options.jsonRules = lib.mkOption {
       description = "JSON rules to run${extraDesc}.";
-      type = lib.types.nullOr (notnft.types.ruleset or (pkgs.formats.json {}).type);
+      type = lib.types.nullOr (notnft.types.ruleset or (pkgs.formats.json { }).type);
       default = null;
     };
     options.stopTextFile = lib.mkOption {
@@ -45,7 +46,7 @@ let
     };
     options.stopJsonRules = lib.mkOption {
       description = "JSON rules to run${extraStopDesc}.";
-      type = lib.types.nullOr (notnft.types.ruleset or (pkgs.formats.json {}).type);
+      type = lib.types.nullOr (notnft.types.ruleset or (pkgs.formats.json { }).type);
       default = null;
     };
   };
@@ -54,11 +55,13 @@ let
     (lib.mapAttrsToList
       (interface: icfg: if icfg.bridge == null || icfg.hostapd.enable then { } else {
         ${icfg.bridge} = interface;
-      }) cfg.interfaces);
+      })
+      cfg.interfaces);
   router-lib = import ./lib.nix {
     inherit lib config utils;
   };
-in {
+in
+{
   imports = [
     ./modules/hostapd.nix
     ./modules/kea.nix
@@ -215,16 +218,16 @@ in {
                 };
                 options.keaSettings = lib.mkOption {
                   default = { };
-                  type = (pkgs.formats.json {}).type;
+                  type = (pkgs.formats.json { }).type;
                   example = lib.literalExpression {
-                    pools = [ { pool = "192.168.1.15 - 192.168.1.200"; } ];
-                    option-data = [ {
+                    pools = [{ pool = "192.168.1.15 - 192.168.1.200"; }];
+                    option-data = [{
                       name = "domain-name-servers";
                       code = 6;
                       csv-format = true;
                       space = "dhcp4";
                       data = "8.8.8.8, 8.8.4.4";
-                    } ];
+                    }];
                   };
                   description = "Kea IPv4 prefix-specific settings";
                 };
@@ -257,7 +260,7 @@ in {
                 };
                 options.settings = lib.mkOption {
                   default = { };
-                  type = (pkgs.formats.json {}).type;
+                  type = (pkgs.formats.json { }).type;
                   description = "Kea settings";
                 };
               };
@@ -309,7 +312,7 @@ in {
                     };
                     options.coreradSettings = lib.mkOption {
                       default = { };
-                      type = (pkgs.formats.toml {}).type;
+                      type = (pkgs.formats.toml { }).type;
                       example = lib.literalExpression {
                         preference = "high";
                       };
@@ -332,7 +335,7 @@ in {
                     };
                     options.coreradSettings = lib.mkOption {
                       default = { };
-                      type = (pkgs.formats.toml {}).type;
+                      type = (pkgs.formats.toml { }).type;
                       example = lib.literalExpression { lifetime = "auto"; };
                       description = "CoreRAD prefix-specific RDNSS settings";
                     };
@@ -341,18 +344,18 @@ in {
                 };
                 options.keaSettings = lib.mkOption {
                   default = { };
-                  type = (pkgs.formats.json {}).type;
+                  type = (pkgs.formats.json { }).type;
                   example = lib.literalExpression {
-                    pools = [ {
+                    pools = [{
                       pool = "fd01:: - fd01::ffff:ffff:ffff:ffff";
-                    } ];
-                    option-data = [ {
+                    }];
+                    option-data = [{
                       name = "dns-servers";
                       code = 23;
                       csv-format = true;
                       space = "dhcp6";
                       data = "aaaa::, bbbb::";
-                    } ];
+                    }];
                   };
                   description = "Kea prefix-specific settings";
                 };
@@ -368,7 +371,7 @@ in {
                 };
                 options.coreradSettings = lib.mkOption {
                   default = { };
-                  type = (pkgs.formats.toml {}).type;
+                  type = (pkgs.formats.toml { }).type;
                   example = lib.literalExpression {
                     on_link = true;
                     autonomous = true;
@@ -404,7 +407,7 @@ in {
                 };
                 options.settings = lib.mkOption {
                   default = { };
-                  type = (pkgs.formats.json {}).type;
+                  type = (pkgs.formats.json { }).type;
                   description = "Kea settings";
                 };
               };
@@ -436,12 +439,12 @@ in {
                 };
                 options.interfaceSettings = lib.mkOption {
                   default = { };
-                  type = (pkgs.formats.toml {}).type;
+                  type = (pkgs.formats.toml { }).type;
                   description = "CoreRAD interface-specific settings";
                 };
                 options.settings = lib.mkOption {
                   default = { };
-                  type = (pkgs.formats.toml {}).type;
+                  type = (pkgs.formats.toml { }).type;
                   example = lib.literalExpression {
                     debug.address = "localhost:9430";
                     debug.prometheus = true;
@@ -477,9 +480,10 @@ in {
     boot.kernel.sysctl = {
       "net.netfilter.nf_log_all_netns" = true;
     } // router-lib.zipHeads (lib.flip lib.mapAttrsToList cfg.interfaces (name: icfg:
-      lib.optionalAttrs (icfg.ipv4.rpFilter != null) {
-        "net.ipv4.conf.${name}.rp_filter" = icfg.ipv4.rpFilter;
-      } // lib.optionalAttrs icfg.ipv4.enableForwarding {
+      lib.optionalAttrs (icfg.ipv4.rpFilter != null)
+        {
+          "net.ipv4.conf.${name}.rp_filter" = icfg.ipv4.rpFilter;
+        } // lib.optionalAttrs icfg.ipv4.enableForwarding {
         "net.ipv4.conf.${name}.forwarding" = true;
       } // lib.optionalAttrs icfg.ipv6.enableForwarding {
         "net.ipv6.conf.${name}.forwarding" = true;
@@ -493,215 +497,228 @@ in {
     router.networkNamespaces =
       builtins.zipAttrsWith (k: vs: { })
         (builtins.filter (x: x != null)
-          ([ { default = null; } ] ++ lib.mapAttrsToList
+          ([{ default = null; }] ++ lib.mapAttrsToList
             (k: v: if v.networkNamespace == null then null else { ${v.networkNamespace} = null; })
             cfg.interfaces));
 
-    systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg: let
-      escapedInterface = utils.escapeSystemdPath interface;
-      ips = (builtins.filter
-              (x: x.assign == true || (x.assign == null && !(lib.hasPrefix "0." x.address)))
-              icfg.ipv4.addresses)
-         ++ (builtins.filter
-              (x: x.assign == true || (x.assign == null && !(lib.hasPrefix ":" x.address || lib.hasPrefix "0:" x.address)))
-              icfg.ipv6.addresses);
-      routeFlags = x: if builtins.isList x.extraArgs then lib.escapeShellArgs (map toString x.extraArgs) else x.extraArgs;
-      routes4 = map routeFlags icfg.ipv4.routes;
-      routes6 = map routeFlags icfg.ipv6.routes;
-    in {
-      # network-addresses config
-      # sets up per-device addresses and routes
-      # nixos does it too, but the way it does it is too simple and doesn't work for some routers
-      name = "network-addresses-${escapedInterface}";
-      value = assert lib.assertMsg
-        (!config.networking.interfaces?${interface})
-        "router.interfaces and networking.interfaces are incompatible! Remove interface `${interface}` from at least one of them.";
-      router-lib.mkServiceForIf interface {
-        description = "Address configuration of ${interface}";
-        wantedBy = [ "network-setup.service" "network.target" ];
-        before = [ "network-setup.service" ];
-        after = [ "network-pre.target" ];
-        serviceConfig.Type = "oneshot";
-        serviceConfig.RemainAfterExit = true;
-        stopIfChanged = false;
-        path = [ pkgs.iproute2 ];
-        script = ''
-          state="/run/nixos/network/addresses/${interface}"
-          mkdir -p $(dirname "$state")
-          ${lib.optionalString (icfg.bridge != null && !icfg.hostapd.enable) ''
-            ip link set "${interface}" master "${icfg.bridge}" up && echo "${interface} " >> "/run/${icfg.bridge}.interfaces" || true
-          ''}
-          ip link set "${interface}" up
-          ${lib.flip lib.concatMapStrings ips (ip:
-            let cidr = "${ip.address}/${toString ip.prefixLength}"; in ''
-              echo "${cidr}" >> $state
-              echo -n "adding address ${cidr}... "
-              if out=$(ip addr add "${cidr}" dev "${interface}" 2>&1); then
+    systemd.services = lib.flip lib.mapAttrs' cfg.interfaces
+      (interface: icfg:
+        let
+          escapedInterface = utils.escapeSystemdPath interface;
+          ips = (builtins.filter
+            (x: x.assign == true || (x.assign == null && !(lib.hasPrefix "0." x.address)))
+            icfg.ipv4.addresses)
+          ++ (builtins.filter
+            (x: x.assign == true || (x.assign == null && !(lib.hasPrefix ":" x.address || lib.hasPrefix "0:" x.address)))
+            icfg.ipv6.addresses);
+          routeFlags = x: if builtins.isList x.extraArgs then lib.escapeShellArgs (map toString x.extraArgs) else x.extraArgs;
+          routes4 = map routeFlags icfg.ipv4.routes;
+          routes6 = map routeFlags icfg.ipv6.routes;
+        in
+        {
+          # network-addresses config
+          # sets up per-device addresses and routes
+          # nixos does it too, but the way it does it is too simple and doesn't work for some routers
+          name = "network-addresses-${escapedInterface}";
+          value = assert lib.assertMsg
+            (!config.networking.interfaces?${interface})
+            "router.interfaces and networking.interfaces are incompatible! Remove interface `${interface}` from at least one of them.";
+            router-lib.mkServiceForIf interface {
+              description = "Address configuration of ${interface}";
+              wantedBy = [ "network-setup.service" "network.target" ];
+              before = [ "network-setup.service" ];
+              after = [ "network-pre.target" ];
+              serviceConfig.Type = "oneshot";
+              serviceConfig.RemainAfterExit = true;
+              stopIfChanged = false;
+              path = [ pkgs.iproute2 ];
+              script = ''
+                state="/run/nixos/network/addresses/${interface}"
+                mkdir -p $(dirname "$state")
+                ${lib.optionalString (icfg.bridge != null && !icfg.hostapd.enable) ''
+                  ip link set "${interface}" master "${icfg.bridge}" up && echo "${interface} " >> "/run/${icfg.bridge}.interfaces" || true
+                ''}
+                ip link set "${interface}" up
+                ${lib.flip lib.concatMapStrings ips (ip:
+                  let cidr = "${ip.address}/${toString ip.prefixLength}"; in ''
+                    echo "${cidr}" >> $state
+                    echo -n "adding address ${cidr}... "
+                    if out=$(ip addr add "${cidr}" dev "${interface}" 2>&1); then
+                      echo "done"
+                    elif ! echo "$out" | grep "File exists" >/dev/null 2>&1; then
+                      echo "'ip addr add "${cidr}" dev "${interface}"' failed: $out"
+                      exit 1
+                    fi
+                  ''
+                )}
+                state="/run/nixos/network/routes/${interface}"
+                mkdir -p $(dirname "$state")
+                echo -n "" > "$state"
+                ${lib.concatMapStrings (route: ''
+                  echo -n "adding route ${route}... "
+                  if out=$(ip -4 route add ${route} 2>&1 && echo ${lib.escapeShellArg ("ip -4 route del " + route)} >> "$state"); then
+                    echo "done"
+                  elif ! echo "$out" | grep "File exists" >/dev/null 2>&1; then
+                    echo "'ip -4 route add "${lib.escapeShellArg route}"' failed: $out"
+                    exit 1
+                  fi
+                '') routes4}
+                ${lib.concatMapStrings (route: ''
+                  echo -n "adding route ${route}... "
+                  if out=$(ip -6 route add ${route} 2>&1 && echo ${lib.escapeShellArg ("ip -6 route del " + route)} >> "$state"); then
+                    echo "done"
+                  elif ! echo "$out" | grep "File exists" >/dev/null 2>&1; then
+                    echo "'ip -6 route add "${lib.escapeShellArg route}"' failed: $out"
+                    exit 1
+                  fi
+                '') routes6}
+              '';
+              preStop = ''
+                state="/run/nixos/network/routes/${interface}"
+                ${lib.optionalString (icfg.bridge != null && !icfg.hostapd.enable) ''
+                  ip link set "${interface}" nomaster up && echo "${interface} " >> "/run/${icfg.bridge}.interfaces" || true
+                ''}
+                if [ -e "$state" ]; then
+                  while read cmd; do
+                    echo -n "running route delete command $cmd... "
+                    $cmd >/dev/null 2>&1 && echo "done" || echo "failed"
+                  done < "$state"
+                  rm -f "$state"
+                fi
+
+                state="/run/nixos/network/addresses/${interface}"
+                if [ -e "$state" ]; then
+                  while read cidr; do
+                    echo -n "deleting address $cidr... "
+                    ip addr del "$cidr" dev "${interface}" >/dev/null 2>&1 && echo "done" || echo "failed"
+                  done < "$state"
+                  rm -f "$state"
+                fi
+              '';
+            };
+        })
+    // lib.flip lib.mapAttrs' bridges (interface: value:
+      let
+        escapedInterface = utils.escapeSystemdPath interface;
+      in
+      {
+        name = "${escapedInterface}-netdev";
+        value = router-lib.mkServiceForIf' { inherit interface; includeBasicDeps = false; } {
+          description = "Router Bridge Interface ${interface}";
+          wantedBy = [ "network-setup.service" "network.target" "sys-subsystem-net-devices-${escapedInterface}.device" ];
+          partOf = [ "network-setup.service" ];
+          after = [ "network-pre.target" ]
+            # soft dependency, order it but don't require
+            ++ map router-lib.mainDepForIf value;
+          before = [ "network-setup.service" ];
+          serviceConfig.Type = "oneshot";
+          serviceConfig.RemainAfterExit = true;
+          path = [ pkgs.iproute2 ];
+          script = ''
+            ip link show dev "${interface}" >/dev/null 2>&1 && ip link del "${interface}" || true
+            echo "Adding bridge ${interface}..."
+            ip link add name "${interface}" type bridge
+            ip link set "${interface}" up
+            echo -n > "/run/${interface}.interfaces"
+            ${lib.concatMapStrings (i: ''
+              ip link set "${i}" master "${interface}" up && echo "${i} " >> "/run/${interface}.interfaces" || true
+            '') value}
+            ip link set "${interface}" up
+          '';
+          postStop = ''
+            ip link set "${interface}" down || true
+            ip link del "${interface}" || true
+            rm -f "/run/${interface}.interfaces"
+          '';
+          reload = ''
+            for interface in `cat /run/${interface}.interfaces`; do
+              ip link set "$interface" nomaster up || true
+            done
+            ${lib.concatMapStrings (i: ''
+              ip link set "${i}" master "${interface}" up && echo "${i}" >> "/run/${interface}.interfaces" || true
+            '') value}
+          '';
+          reloadIfChanged = true;
+        };
+      })
+    // lib.flip lib.mapAttrs' cfg.veths (interface: value:
+      let
+        escapedInterface = utils.escapeSystemdPath interface;
+        escapedPeerInterface = utils.escapeSystemdPath value.peerName;
+      in
+      {
+        name = "${escapedInterface}-netdev";
+        value = router-lib.mkServiceForIf' { inherit interface; includeBasicDeps = false; } {
+          description = "Virtual Ethernet Interfaces ${interface}/${value.peerName}";
+          wantedBy = [
+            "network-setup.service"
+            "network.target"
+            "sys-subsystem-net-devices-${escapedInterface}.device"
+            "sys-subsystem-net-devices-${escapedPeerInterface}.device"
+          ];
+          partOf = [ "network-setup.service" ];
+          after = [ "network-pre.target" ];
+          before = [ "network-setup.service" ];
+          serviceConfig.Type = "oneshot";
+          serviceConfig.RemainAfterExit = true;
+          stopIfChanged = false;
+          path = [ pkgs.iproute2 ];
+          script = ''
+            ip link show dev "${interface}" >/dev/null 2>&1 && ip link del "${interface}" || true
+            echo "Adding veth ${interface}..."
+            ip link add name "${interface}" type veth peer name "${value.peerName}"
+            ip link set "${interface}" up
+          '';
+          postStop = ''
+            ip link set "${interface}" down || true
+            ip link del "${interface}" || true
+          '';
+        };
+      })
+    // lib.flip lib.mapAttrs' (lib.filterAttrs (k: v: v.rules != [ ]) cfg.networkNamespaces) (name: value:
+      let
+        args = x: if builtins.isList x.extraArgs then lib.escapeShellArgs (map toString x.extraArgs) else x.extraArgs;
+      in
+      {
+        name = "netns-rules-${name}";
+        value = {
+          description = "Network Namespace rules for ${name}";
+          before = [ "network-pre.target" ];
+          wants = [ "network-pre.target" ];
+          bindsTo = [ "netns-${name}.service" ];
+          after = [ "netns-${name}.service" ];
+          wantedBy = [ "network-setup.service" "network.target" ];
+          serviceConfig.Type = "oneshot";
+          serviceConfig.RemainAfterExit = true;
+          serviceConfig.NetworkNamespacePath = lib.mkIf (name != "default") "/var/run/netns/${name}";
+          stopIfChanged = false;
+          path = [ pkgs.iproute2 ];
+          script = builtins.concatStringsSep "\n" (map
+            (rule: ''
+              state="/run/nixos/network/netns_rules/${name}"
+              mkdir -p $(dirname "$state")
+              if out=$(ip ${if rule.ipv6 then "-6" else "-4"} rule add ${args rule} 2>&1 && echo ${lib.escapeShellArg ("ip ${if rule.ipv6 then "-6" else "-4"} rule del " + args rule)} >> "$state"); then
                 echo "done"
               elif ! echo "$out" | grep "File exists" >/dev/null 2>&1; then
-                echo "'ip addr add "${cidr}" dev "${interface}"' failed: $out"
+                echo "'ip ${if rule.ipv6 then "-6" else "-4"} rule add "${lib.escapeShellArg (args rule)}"' failed: $out"
                 exit 1
               fi
-            ''
-          )}
-          state="/run/nixos/network/routes/${interface}"
-          mkdir -p $(dirname "$state")
-          echo -n "" > "$state"
-          ${lib.concatMapStrings (route: ''
-            echo -n "adding route ${route}... "
-            if out=$(ip -4 route add ${route} 2>&1 && echo ${lib.escapeShellArg ("ip -4 route del " + route)} >> "$state"); then
-              echo "done"
-            elif ! echo "$out" | grep "File exists" >/dev/null 2>&1; then
-              echo "'ip -4 route add "${lib.escapeShellArg route}"' failed: $out"
-              exit 1
-            fi
-          '') routes4}
-          ${lib.concatMapStrings (route: ''
-            echo -n "adding route ${route}... "
-            if out=$(ip -6 route add ${route} 2>&1 && echo ${lib.escapeShellArg ("ip -6 route del " + route)} >> "$state"); then
-              echo "done"
-            elif ! echo "$out" | grep "File exists" >/dev/null 2>&1; then
-              echo "'ip -6 route add "${lib.escapeShellArg route}"' failed: $out"
-              exit 1
-            fi
-          '') routes6}
-        '';
-        preStop = ''
-          state="/run/nixos/network/routes/${interface}"
-          ${lib.optionalString (icfg.bridge != null && !icfg.hostapd.enable) ''
-            ip link set "${interface}" nomaster up && echo "${interface} " >> "/run/${icfg.bridge}.interfaces" || true
-          ''}
-          if [ -e "$state" ]; then
-            while read cmd; do
-              echo -n "running route delete command $cmd... "
-              $cmd >/dev/null 2>&1 && echo "done" || echo "failed"
-            done < "$state"
-            rm -f "$state"
-          fi
-
-          state="/run/nixos/network/addresses/${interface}"
-          if [ -e "$state" ]; then
-            while read cidr; do
-              echo -n "deleting address $cidr... "
-              ip addr del "$cidr" dev "${interface}" >/dev/null 2>&1 && echo "done" || echo "failed"
-            done < "$state"
-            rm -f "$state"
-          fi
-        '';
-      };
-    })
-    // lib.flip lib.mapAttrs' bridges (interface: value: let
-      escapedInterface = utils.escapeSystemdPath interface;
-    in {
-      name = "${escapedInterface}-netdev";
-      value = router-lib.mkServiceForIf' { inherit interface; includeBasicDeps = false; } {
-        description = "Router Bridge Interface ${interface}";
-        wantedBy = [ "network-setup.service" "network.target" "sys-subsystem-net-devices-${escapedInterface}.device" ];
-        partOf = [ "network-setup.service" ];
-        after = [ "network-pre.target" ]
-          # soft dependency, order it but don't require
-          ++ map router-lib.mainDepForIf value;
-        before = [ "network-setup.service" ];
-        serviceConfig.Type = "oneshot";
-        serviceConfig.RemainAfterExit = true;
-        path = [ pkgs.iproute2 ];
-        script = ''
-          ip link show dev "${interface}" >/dev/null 2>&1 && ip link del "${interface}" || true
-          echo "Adding bridge ${interface}..."
-          ip link add name "${interface}" type bridge
-          ip link set "${interface}" up
-          echo -n > "/run/${interface}.interfaces"
-          ${lib.concatMapStrings (i: ''
-            ip link set "${i}" master "${interface}" up && echo "${i} " >> "/run/${interface}.interfaces" || true
-          '') value}
-          ip link set "${interface}" up
-        '';
-        postStop = ''
-          ip link set "${interface}" down || true
-          ip link del "${interface}" || true
-          rm -f "/run/${interface}.interfaces"
-        '';
-        reload = ''
-          for interface in `cat /run/${interface}.interfaces`; do
-            ip link set "$interface" nomaster up || true
-          done
-          ${lib.concatMapStrings (i: ''
-            ip link set "${i}" master "${interface}" up && echo "${i}" >> "/run/${interface}.interfaces" || true
-          '') value}
-        '';
-        reloadIfChanged = true;
-      };
-    })
-    // lib.flip lib.mapAttrs' cfg.veths (interface: value: let
-      escapedInterface = utils.escapeSystemdPath interface;
-      escapedPeerInterface = utils.escapeSystemdPath value.peerName;
-    in {
-      name = "${escapedInterface}-netdev";
-      value = router-lib.mkServiceForIf' { inherit interface; includeBasicDeps = false; } {
-        description = "Virtual Ethernet Interfaces ${interface}/${value.peerName}";
-        wantedBy = [
-          "network-setup.service"
-          "network.target"
-          "sys-subsystem-net-devices-${escapedInterface}.device"
-          "sys-subsystem-net-devices-${escapedPeerInterface}.device"
-        ];
-        partOf = [ "network-setup.service" ];
-        after = [ "network-pre.target" ];
-        before = [ "network-setup.service" ];
-        serviceConfig.Type = "oneshot";
-        serviceConfig.RemainAfterExit = true;
-        stopIfChanged = false;
-        path = [ pkgs.iproute2 ];
-        script = ''
-          ip link show dev "${interface}" >/dev/null 2>&1 && ip link del "${interface}" || true
-          echo "Adding veth ${interface}..."
-          ip link add name "${interface}" type veth peer name "${value.peerName}"
-          ip link set "${interface}" up
-        '';
-        postStop = ''
-          ip link set "${interface}" down || true
-          ip link del "${interface}" || true
-        '';
-      };
-    })
-    // lib.flip lib.mapAttrs' (lib.filterAttrs (k: v: v.rules != [ ]) cfg.networkNamespaces) (name: value: let
-      args = x: if builtins.isList x.extraArgs then lib.escapeShellArgs (map toString x.extraArgs) else x.extraArgs;
-    in {
-      name = "netns-rules-${name}";
-      value = {
-        description = "Network Namespace rules for ${name}";
-        before = [ "network-pre.target" ];
-        wants = [ "network-pre.target" ];
-        bindsTo = [ "netns-${name}.service" ];
-        after = [ "netns-${name}.service" ];
-        wantedBy = [ "network-setup.service" "network.target" ];
-        serviceConfig.Type = "oneshot";
-        serviceConfig.RemainAfterExit = true;
-        serviceConfig.NetworkNamespacePath = lib.mkIf (name != "default") "/var/run/netns/${name}";
-        stopIfChanged = false;
-        path = [ pkgs.iproute2 ];
-        script = builtins.concatStringsSep "\n" (map (rule: ''
-          state="/run/nixos/network/netns_rules/${name}"
-          mkdir -p $(dirname "$state")
-          if out=$(ip ${if rule.ipv6 then "-6" else "-4"} rule add ${args rule} 2>&1 && echo ${lib.escapeShellArg ("ip ${if rule.ipv6 then "-6" else "-4"} rule del " + args rule)} >> "$state"); then
-            echo "done"
-          elif ! echo "$out" | grep "File exists" >/dev/null 2>&1; then
-            echo "'ip ${if rule.ipv6 then "-6" else "-4"} rule add "${lib.escapeShellArg (args rule)}"' failed: $out"
-            exit 1
-          fi
-        '') value.rules);
-        postStop = builtins.concatStringsSep "\n" (map (rule: ''
-          state="/run/nixos/network/netns_rules/${name}"
-          if [ -e "$state" ]; then
-            while read cmd; do
-              echo -n "running rule delete command $cmd... "
-              $cmd >/dev/null 2>&1 && echo "done" || echo "failed"
-            done < "$state"
-            rm -f "$state"
-          fi
-        '') value.rules);
-      };
-    })
+            '')
+            value.rules);
+          postStop = builtins.concatStringsSep "\n" (map
+            (rule: ''
+              state="/run/nixos/network/netns_rules/${name}"
+              if [ -e "$state" ]; then
+                while read cmd; do
+                  echo -n "running rule delete command $cmd... "
+                  $cmd >/dev/null 2>&1 && echo "done" || echo "failed"
+                done < "$state"
+                rm -f "$state"
+              fi
+            '')
+            value.rules);
+        };
+      })
     // lib.flip lib.mapAttrs' cfg.networkNamespaces (name: value: {
       name = "netns-${name}";
       value = {
@@ -737,47 +754,56 @@ in {
     })
     // lib.flip lib.mapAttrs'
       (lib.filterAttrs (k: v: router-lib.requiresNetnsSetup k) cfg.interfaces)
-      (interface: value: let
-      escapedInterface = utils.escapeSystemdPath interface;
-      isVeth = router-lib.isVethPeer interface;
-      vethParent = router-lib.vethParent interface;
-      peerNs = cfg.interfaces.${vethParent}.networkNamespace or null;
-    in {
-      name = "setup-netns-for-${escapedInterface}";
-      value = router-lib.mkServiceForIf' (
-        # require rather than bind
-        # because as soon as we move the interface, it's gone from the service's namespace
-        # and bind would stop the service immediately
-        if isVeth then { interface = vethParent; bindType = "requires"; } else { inherit interface; preNetns = true; bindType = "requires"; }
-      ) {
-        description = "Network Namespace configuration of ${interface}";
-        wantedBy = [ "network-setup.service" "network.target" ];
-        before = [ "network-setup.service" ];
-        after = [ "network-pre.target" ];
-        serviceConfig.Type = "oneshot";
-        serviceConfig.RemainAfterExit = true;
-        stopIfChanged = false;
-        path = [ pkgs.iproute2 ];
-        script = ''
-          ip link set "${interface}" netns "${value.networkNamespace}"
-        '';
-        preStop = if isVeth then ''
-          ip netns exec "${value.networkNamespace}" ip link set "${interface}" netns "${if peerNs != null then peerNs else "1"}"
-        '' else ''
-          ip netns exec "${value.networkNamespace}" ip link set "${interface}" netns 1
-        '';
-      };
-    })
+      (interface: value:
+        let
+          escapedInterface = utils.escapeSystemdPath interface;
+          isVeth = router-lib.isVethPeer interface;
+          vethParent = router-lib.vethParent interface;
+          peerNs = cfg.interfaces.${vethParent}.networkNamespace or null;
+        in
+        {
+          name = "setup-netns-for-${escapedInterface}";
+          value = router-lib.mkServiceForIf'
+            (
+              # require rather than bind
+              # because as soon as we move the interface, it's gone from the service's namespace
+              # and bind would stop the service immediately
+              if isVeth then { interface = vethParent; bindType = "requires"; } else { inherit interface; preNetns = true; bindType = "requires"; }
+            )
+            {
+              description = "Network Namespace configuration of ${interface}";
+              wantedBy = [ "network-setup.service" "network.target" ];
+              before = [ "network-setup.service" ];
+              after = [ "network-pre.target" ];
+              serviceConfig.Type = "oneshot";
+              serviceConfig.RemainAfterExit = true;
+              stopIfChanged = false;
+              path = [ pkgs.iproute2 ];
+              script = ''
+                ip link set "${interface}" netns "${value.networkNamespace}"
+              '';
+              preStop =
+                if isVeth then ''
+                  ip netns exec "${value.networkNamespace}" ip link set "${interface}" netns "${if peerNs != null then peerNs else "1"}"
+                '' else ''
+                  ip netns exec "${value.networkNamespace}" ip link set "${interface}" netns 1
+                '';
+            };
+        })
     // {
       network-setup = {
         partOf = map (name: "network-addresses-${utils.escapeSystemdPath name}.service") (builtins.attrNames cfg.interfaces);
       };
     }
-    // router-lib.zipHeads (builtins.concatLists (lib.mapAttrsToList (interface: icfg: map (service: {
-      ${service.service or service} =
-        if builtins.isString service then router-lib.mkServiceForIf interface { }
-        else router-lib.mkServiceForIf' (builtins.removeAttrs service [ "service" ] // { inherit interface; }) { };
-    }) icfg.dependentServices) cfg.interfaces));
+    // router-lib.zipHeads (builtins.concatLists (lib.mapAttrsToList
+      (interface: icfg: map
+        (service: {
+          ${service.service or service} =
+            if builtins.isString service then router-lib.mkServiceForIf interface { }
+            else router-lib.mkServiceForIf' (builtins.removeAttrs service [ "service" ] // { inherit interface; }) { };
+        })
+        icfg.dependentServices)
+      cfg.interfaces));
     systemd.network.links = lib.flip lib.mapAttrs' cfg.interfaces (name: value: {
       name = "40-${name}";
       value = {

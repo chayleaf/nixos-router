@@ -19,9 +19,9 @@ let
 
   eq = a: b:
     lib.assertMsg (a == b) "Expected ${builtins.toJSON a} == ${builtins.toJSON b}";
-  matches = r: s: 
+  matches = r: s:
     lib.assertMsg (builtins.match r s != null) "Expected ${s} to match ${r}";
-  notMatches = r: s: 
+  notMatches = r: s:
     lib.assertMsg (builtins.match r s == null) "Expected ${s} not to match ${r}";
   backtrip = func1: func2: a: b:
     assert eq (func1 a) b; eq (func2 b) a;
