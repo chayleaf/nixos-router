@@ -66,7 +66,7 @@ in
         } // lib.optionalAttrs (icfg.hostapd.settings?country_code) {
           ieee80211d = true;
         } // lib.optionalAttrs (icfg.bridge != null) {
-          bridge = icfg.bridge.name;
+          bridge = icfg.bridge;
         };
         settings = defaultSettings // icfg.hostapd.settings // forceSettings;
         configFile = pkgs.writeText "hostapd.conf" (compileSettings settings);
