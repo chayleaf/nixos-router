@@ -34,16 +34,16 @@
             {
               type = "app";
               program = toString (pkgs.writers.writeBash "debug-router" ''
-                  cp "${(pkgs.nixosOptionsDoc {
+                cp "${(pkgs.nixosOptionsDoc {
                   options = eval.options.router;
-                        transformOptions = opt: opt // (with nixpkgs.lib; {
-                        declarations = map (decl: if hasPrefix (toString ./.) (toString decl) then
-                        let 
-                          subpath = removePrefix "/" (removePrefix (toString ./.) (toString decl));
-                        in {
-                          url = "${subpath}"; name = subpath;
-                        } else decl) opt.declarations;
-                      });
+                  transformOptions = opt: opt // (with nixpkgs.lib; {
+                    declarations = map (decl: if hasPrefix (toString ./.) (toString decl) then
+                      let
+                        subpath = removePrefix "/" (removePrefix (toString ./.) (toString decl));
+                      in {
+                        url = "${subpath}"; name = subpath;
+                      } else decl) opt.declarations;
+                  });
                 }).optionsCommonMark}" OPTIONS.md
                   chmod 644 OPTIONS.md
               '');
