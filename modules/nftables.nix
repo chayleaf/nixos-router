@@ -131,7 +131,6 @@ in
       environment.systemPackages = [ pkgs.nftables ];
       boot.blacklistedKernelModules = [ "ip_tables" ];
       # make the firewall use nftables by default
-      networking.networkmanager.firewallBackend = lib.mkDefault "nftables";
       services.fail2ban.banaction = lib.mkDefault "nftables-multiport";
       services.fail2ban.banaction-allports = lib.mkDefault "nftables-allport";
       services.fail2ban.packageFirewall = lib.mkDefault pkgs.nftables;
