@@ -107,7 +107,7 @@ in
       {
         environment.etc = lib.mapAttrs'
           (interface: icfg: {
-            name = "kea/dhcp4-server-${utils.escapeSystemdPath interface}.conf";
+            name = "kea/dhcp4-server-${interface}.conf";
             value = lib.mkIf (icfg.ipv4.kea.enable && icfg.ipv4.addresses != [ ]) {
               source = configs.${interface};
             };
@@ -121,7 +121,7 @@ in
             documentation = [ "man:kea-dhcp4(8)" "https://kea.readthedocs.io/en/kea-${package.version}/arm/dhcp4-srv.html" ];
             after = [ "network-online.target" "time-sync.target" ];
             wantedBy = [ "multi-user.target" ];
-            environment = { KEA_PIDFILE_DIR = "/run/kea"; KEA_LOCKFILE_DIR = "/run/kea"; };
+            environment = { KEA_PIDFILE_DIR = "/run/kea4-${interface}"; KEA_LOCKFILE_DIR = "/run/kea4-${interface}"; };
             restartTriggers = [ configs.${interface} ];
 
             serviceConfig = {
@@ -191,7 +191,7 @@ in
       {
         environment.etc = lib.mapAttrs'
           (interface: icfg: {
-            name = "kea/dhcp6-server-${utils.escapeSystemdPath interface}.conf";
+            name = "kea/dhcp6-server-${interface}.conf";
             value = lib.mkIf (icfg.ipv6.kea.enable && icfg.ipv6.addresses != [ ]) {
               source = configs.${interface};
             };
@@ -205,7 +205,7 @@ in
             documentation = [ "man:kea-dhcp6(8)" "https://kea.readthedocs.io/en/kea-${package.version}/arm/dhcp6-srv.html" ];
             after = [ "network-online.target" "time-sync.target" ];
             wantedBy = [ "multi-user.target" ];
-            environment = { KEA_PIDFILE_DIR = "/run/kea"; KEA_LOCKFILE_DIR = "/run/kea"; };
+            environment = { KEA_PIDFILE_DIR = "/run/kea6-${interface}"; KEA_LOCKFILE_DIR = "/run/kea6-${interface}"; };
             restartTriggers = [ configs.${interface} ];
 
             serviceConfig = {
