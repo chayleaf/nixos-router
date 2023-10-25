@@ -35,7 +35,6 @@ let
     DynamicUser = true;
     User = "kea";
     ConfigurationDirectory = "kea";
-    RuntimeDirectory = "kea";
     StateDirectory = "kea";
     UMask = "0077";
   };
@@ -129,6 +128,7 @@ in
                 + lib.escapeShellArgs ([ "/etc/kea/dhcp4-server-${interface}.conf" ]);
               AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
               CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
+              RuntimeDirectory = "kea4-${interface}";
             } // commonServiceConfig;
           });
         });
@@ -213,6 +213,7 @@ in
                 + lib.escapeShellArgs ([ "/etc/kea/dhcp6-server-${interface}.conf" ]);
               AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
               CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
+              RuntimeDirectory = "kea6-${interface}";
             } // commonServiceConfig;
           });
         });
