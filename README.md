@@ -60,7 +60,9 @@ VLAN, Open vSwitch device support).
 
 ## Options
 
-Why not create a HTML page for this? Because I'm lazy.
+See [the wiki](https://github.com/chayleaf/nixos-router/wiki/Options)
+for an automatically built option list. This is a manually condensed
+version of the option list.
 
 - `router.enable` - whether to do anything at all
 - `router.networkNamespaces` - per-network namespace config.
