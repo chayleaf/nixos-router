@@ -1,7 +1,7 @@
 {
   description = "A router framework for NixOS";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
 
   outputs = { self, nixpkgs }:
     let
