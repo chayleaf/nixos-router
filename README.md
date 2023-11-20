@@ -20,15 +20,18 @@ features even at the cost of breaking existing configs if necessary
 (after all, this project is in its infancy).
 
 I'll try to keep breaking changes to a minimum, but as I said, I can't
-guarantee they won't happen (even NixOS has them). You are also expected
-to run nixos-unstable. When things settle, I'll start creating git tags
-for each NixOS version (probably starting from NixOS 23.11).
+guarantee they won't happen (even NixOS has them).
+
+Use the 23.11 branch for NixOS 23.11. I'll backport what I can to it.
+For nixos-unstable, use the master branch.
 
 I doubt it would be easy to upstream these changes to nixpkgs, as it
 would introduce many breaking changes on top of breaking changes, so I
 am not willing to work on it. Some parts are more upstreamable, such as
 allowing JSON nftables rulesets, while other are less upstreamable,
-like... most parts of this repo.
+like... most parts of this repo, which are a reimplementation of
+scripted networking, which some nixpkgs members want to get rid of in
+general (in favor of systemd-networkd).
 
 When [this](https://github.com/systemd/systemd/issues/11103) gets
 closed, I might be able to migrate to systemd-networkd. This may be the

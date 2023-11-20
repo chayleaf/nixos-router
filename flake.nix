@@ -26,18 +26,19 @@
           inherit system;
           modules = [ ./default.nix ];
         };
-      in pkgs.nixosOptionsDoc {
-        options = eval.options.router;
-        transformOptions = opt: opt // {
-          declarations = map
-            (decl:
-              if lib.hasPrefix (toString ./.) (toString decl)
-              then
-                let subpath = lib.removePrefix "/" (lib.removePrefix (toString ./.) (toString decl));
-                in { url = "https://github.com/chayleaf/nixos-router/blob/${self.sourceInfo.rev or "master"}/${subpath}"; name = subpath; }
-              else decl)
-            opt.declarations;
+        doc = pkgs.nixosOptionsDoc {
+          options = eval.options.router;
+          transformOptions = opt: opt // {
+            declarations = map
+              (decl:
+                if lib.hasPrefix (toString ./.) (toString decl)
+                then
+                  let subpath = lib.removePrefix "/" (lib.removePrefix (toString ./.) (toString decl));
+                  in { url = "https://github.com/chayleaf/nixos-router/blob/${self.sourceInfo.rev or "master"}/${subpath}"; name = subpath; }
+                else decl)
+              opt.declarations;
+          };
         };
-      });
+      in builtins.removeAttrs doc [ "optionsNix" ]);
     };
 }
