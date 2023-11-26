@@ -110,6 +110,8 @@ version of the option list.
     - `<vlan>.vid` - VLAN id filter
     - `<vlan>.untagged` - whether this should match untagged traffic
       (defaults to false)
+  - `<iface>.extraInitCommands` - extra commands to execute before
+    bridge/address configuration
   - `<iface>.networkNamespace` - the network namespace where this device
     and all dependent services will run
   - `<iface>.dependentServices` - services that should depend on this
