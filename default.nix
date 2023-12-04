@@ -506,7 +506,6 @@ in
     # performance tweaks
     powerManagement.cpuFreqGovernor = lib.mkDefault "ondemand";
     services.irqbalance.enable = lib.mkDefault true;
-    boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_xanmod;
 
     boot.kernel.sysctl = {
       "net.netfilter.nf_log_all_netns" = true;
