@@ -18,7 +18,8 @@ let
       (lib.mapAttrsToList
         (interface: icfg: if icfg.bridge == null then null else {
           ${icfg.bridge.name} = if icfg.hostapd.enable then null else interface;
-        }) cfg.interfaces));
+        })
+        cfg.interfaces));
   # finds the longest zero-only sequence in a parsed IPv6
   # returns an attrset with maxStart (start of the sequence) and maxLen (sequence length)
   longestZeroSeq =

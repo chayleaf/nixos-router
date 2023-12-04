@@ -20,25 +20,27 @@
       checks.x86_64-linux.default = let pkgs = nixpkgs.legacyPackages.x86_64-linux; in pkgs.callPackage ./checks.nix {
         inherit nixpkgs;
       };
-      packages = forEachSystem ({ pkgs, system }: let
-        inherit (nixpkgs) lib;
-        eval = import /${pkgs.path}/nixos/lib/eval-config.nix {
-          inherit system;
-          modules = [ ./default.nix ];
-        };
-        doc = pkgs.nixosOptionsDoc {
-          options = eval.options.router;
-          transformOptions = opt: opt // {
-            declarations = map
-              (decl:
-                if lib.hasPrefix (toString ./.) (toString decl)
-                then
-                  let subpath = lib.removePrefix "/" (lib.removePrefix (toString ./.) (toString decl));
-                  in { url = "https://github.com/chayleaf/nixos-router/blob/${self.sourceInfo.rev or "master"}/${subpath}"; name = subpath; }
-                else decl)
-              opt.declarations;
+      packages = forEachSystem ({ pkgs, system }:
+        let
+          inherit (nixpkgs) lib;
+          eval = import /${pkgs.path}/nixos/lib/eval-config.nix {
+            inherit system;
+            modules = [ ./default.nix ];
           };
-        };
-      in builtins.removeAttrs doc [ "optionsNix" ]);
+          doc = pkgs.nixosOptionsDoc {
+            options = eval.options.router;
+            transformOptions = opt: opt // {
+              declarations = map
+                (decl:
+                  if lib.hasPrefix (toString ./.) (toString decl)
+                  then
+                    let subpath = lib.removePrefix "/" (lib.removePrefix (toString ./.) (toString decl));
+                    in { url = "https://github.com/chayleaf/nixos-router/blob/${self.sourceInfo.rev or "master"}/${subpath}"; name = subpath; }
+                  else decl)
+                opt.declarations;
+            };
+          };
+        in
+        builtins.removeAttrs doc [ "optionsNix" ]);
     };
 }

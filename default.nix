@@ -156,25 +156,15 @@ in
           description = "Extra commands for interface initialization to be executed before bridge/address configuration.";
           default = "";
           example = lib.literalExpression ''
-          '''
-            ''${pkgs.ethtool}/bin/ethtool --offload eth0 tso off
-          ''''';
+            '''
+              ''${pkgs.ethtool}/bin/ethtool --offload eth0 tso off
+            ''''';
           type = lib.types.lines;
         };
         options.networkNamespace = lib.mkOption {
           description = "Network namespace name to create this device in";
           default = null;
           type = with lib.types; nullOr str;
-        };
-        options.systemdLinkLinkConfig = lib.mkOption {
-          visible = false;
-          default = null;
-          type = with lib.types; nullOr attrs;
-        };
-        options.systemdLinkMatchConfig = lib.mkOption {
-          visible = false;
-          default = null;
-          type = with lib.types; nullOr attrs;
         };
         options.systemdLink.linkConfig = lib.mkOption {
           description = "This device's systemd.link(5) link config";
@@ -864,15 +854,10 @@ in
       name = "40-${name}";
       value = {
         matchConfig =
-          if value.systemdLinkMatchConfig != null
-          then throw "Please use systemdLink.matchConfig instead of systemdLinkMatchConfig"
-          else if value.systemdLink.matchConfig == { }
+          if value.systemdLink.matchConfig == { }
           then { OriginalName = name; }
           else value.systemdLink.matchConfig;
-        linkConfig =
-          if value.systemdLinkLinkConfig != null
-          then throw "Please use systemdLink.linkConfig instead of systemdLinkLinkConfig"
-          else value.systemdLink.linkConfig;
+        linkConfig = value.systemdLink.linkConfig;
       };
     });
     networking.useDHCP = lib.mkIf (builtins.any (x: x.dhcpcd.enable) (builtins.attrValues cfg.interfaces)) false;
