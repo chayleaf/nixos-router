@@ -119,6 +119,7 @@ in
             description = "Kea DHCP4 Server (${interface})";
             documentation = [ "man:kea-dhcp4(8)" "https://kea.readthedocs.io/en/kea-${package.version}/arm/dhcp4-srv.html" ];
             after = [ "network-online.target" "time-sync.target" ];
+            wants = [ "network-online.target" ];
             wantedBy = [ "multi-user.target" ];
             environment = { KEA_PIDFILE_DIR = "/run/kea4-${interface}"; KEA_LOCKFILE_DIR = "/run/kea4-${interface}"; };
             restartTriggers = [ configs.${interface} ];
@@ -204,6 +205,7 @@ in
             description = "Kea DHCP6 Server (${interface})";
             documentation = [ "man:kea-dhcp6(8)" "https://kea.readthedocs.io/en/kea-${package.version}/arm/dhcp6-srv.html" ];
             after = [ "network-online.target" "time-sync.target" ];
+            wants = [ "network-online.target" ];
             wantedBy = [ "multi-user.target" ];
             environment = { KEA_PIDFILE_DIR = "/run/kea6-${interface}"; KEA_LOCKFILE_DIR = "/run/kea6-${interface}"; };
             restartTriggers = [ configs.${interface} ];
