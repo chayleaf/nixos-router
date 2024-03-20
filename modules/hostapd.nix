@@ -13,7 +13,6 @@ in
 {
   config = lib.mkIf (cfg.enable && builtins.any (x: x.hostapd.enable) (builtins.attrValues cfg.interfaces)) {
     environment.systemPackages = [ hostapd ] ++ (with pkgs; [ wirelesstools ]);
-    services.udev.packages = with pkgs; [ crda ];
     hardware.wirelessRegulatoryDatabase = true;
     systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg:
       let
