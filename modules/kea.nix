@@ -57,8 +57,8 @@ in
                 persist = true;
                 name = "/var/lib/private/kea/dhcp4-${interface}.leases";
               };
-              subnet4 = map
-                ({ address, prefixLength, gateways, dns, keaSettings, ... }:
+              subnet4 = lib.imap1
+                (id: { address, prefixLength, gateways, dns, keaSettings, ... }:
                   let
                     subnetMask = router-lib.genMask4 prefixLength;
                     parsed = router-lib.parseIp4 address;
@@ -66,7 +66,7 @@ in
                     maxIp = router-lib.orMask (router-lib.invMask4 subnetMask) parsed;
                   in
                   {
-                    inherit interface;
+                    inherit id interface;
                     subnet = router-lib.serializeCidr { inherit address prefixLength; };
                     option-data =
                       lib.optional (dns != [ ])
@@ -152,8 +152,8 @@ in
                 persist = true;
                 name = "/var/lib/private/kea/dhcp6-${interface}.leases";
               };
-              subnet6 = map
-                ({ address, prefixLength, dns, keaSettings, ... }:
+              subnet6 = lib.imap1
+                (id: { address, prefixLength, dns, keaSettings, ... }:
                   let
                     subnetMask = router-lib.genMask6 prefixLength;
                     parsed = router-lib.parseIp6 address;
@@ -161,7 +161,7 @@ in
                     maxIp = router-lib.orMask (router-lib.invMask6 subnetMask) parsed;
                   in
                   {
-                    inherit interface;
+                    inherit id interface;
                     option-data =
                       lib.optional (dns != [ ]) {
                         name = "dns-servers";

@@ -11,6 +11,12 @@ let
         fileSystems."/" = { device = "none"; fsType = "tmpfs"; neededForBoot = false; options = [ "defaults" "size=2G" "mode=755" ]; };
         boot.loader.grub.device = "nodev";
         router.enable = true;
+        router.interfaces.br0 = {
+          ipv4.kea.enable = true;
+          ipv6.corerad.enable = true;
+          ipv6.kea.enable = true;
+          ipv4.addresses = [ { address = "192.168.1.1"; prefixLength = 24; } ];
+        };
         networking.nftables.enable = true;
       }
     ];

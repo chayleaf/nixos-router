@@ -41,6 +41,6 @@
             };
           };
         in
-        builtins.removeAttrs doc [ "optionsNix" ]);
+        builtins.removeAttrs doc [ "optionsNix" "optionsDocBook" ]);
     };
 }
