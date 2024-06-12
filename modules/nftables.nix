@@ -149,6 +149,7 @@ in
                 # XXX: is running in network-pre and restarting on fail a couple times
                 #      more resilient for some configs? I don't know, so I'm leaving
                 #      this "cleaner" solution here
+                # FIXME: OpenVPN still runs after nftables sometimes
                 after = [ "network.target" "netns-${name}.service" ];
                 bindsTo = [ "netns-${name}.service" ];
                 script = mkNftStartCmd value;
@@ -158,6 +159,8 @@ in
                   Type = "oneshot";
                   RemainAfterExit = true;
                   NetworkNamespacePath = "/var/run/netns/${name}";
+                  Restart = "on-failure";
+                  RestartSec = "10s";
                 };
                 reloadIfChanged = true;
               };
