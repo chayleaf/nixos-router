@@ -22,8 +22,10 @@ features even at the cost of breaking existing configs if necessary
 I'll try to keep breaking changes to a minimum, but as I said, I can't
 guarantee they won't happen (even NixOS has them).
 
-Use the 23.11 branch for NixOS 23.11. I'll backport what I can to it.
-For nixos-unstable, use the master branch.
+There are separate branches for stable NixOS versions (like the 24.05
+branch for NixOS 24.05), each branch will only be supported until the
+next stable NixOS release. Support entails non-breaking bugfixes and
+certain backports. For nixos-unstable, use the master branch.
 
 I doubt it would be easy to upstream these changes to nixpkgs, as it
 would introduce many breaking changes on top of breaking changes, so I
