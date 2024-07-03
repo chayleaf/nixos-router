@@ -127,15 +127,15 @@ in
         };
         options.remote = lib.mkOption {
           description = "remote ip";
-          type = lib.types.nullOr router-lib.types.ip;
+          type = with lib.types; nullOr (either (enum ["any"]) router-lib.types.ip);
         };
         options.local = lib.mkOption {
           description = "local ip";
-          type = lib.types.nullOr router-lib.types.ip;
+          type = with lib.types; nullOr (either (enum ["any"]) router-lib.types.ip);
         };
         options.ttl = lib.mkOption {
           description = "ttl";
-          type = with lib.types; nullOr int;
+          type = with lib.types; nullOr (either (enum ["inherit"]) ints.u8);
         };
       });
     };

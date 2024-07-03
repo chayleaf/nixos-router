@@ -98,6 +98,11 @@ version of the option list.
       stop/reload time. Basically, they are supposed to undo the changes
       this ruleset applies, or do nothing if it's not applied anyway.
       They default to `flush ruleset` if no stop rules are set.
+- `router.tunnels.<name>` - IP tunnels
+  - `<tunnel>.mode` - tunnel mode (`gre | ipip | isatap | sit | vti`)
+  - `<tunnel>.remote` - remote address
+  - `<tunnel>.local` - local address
+  - `<tunnel>.ttl` - time to live
 - `router.veths.<name>` - veth pairs
   - `<veth>.peerName` - peer name (second device to be created at the
     same time)
