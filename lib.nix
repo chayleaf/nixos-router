@@ -48,7 +48,8 @@ lib.optionalAttrs (config != null && utils != null)
     ifIsVirtualRouter = interface:
       bridges?${interface}
       || cfg.veths?${interface}
-      || vethParents?${interface};
+      || vethParents?${interface}
+      || cfg.tunnels?${interface};
     # interface is virtual and managed by nixos
     ifIsVirtualNixos = interface:
       (lib.filterAttrs (k: v: v.virtual) config.networking.interfaces)?${interface}
@@ -206,8 +207,10 @@ lib.optionalAttrs (config != null && utils != null)
   types = {
     ipv4 = lib.types.strMatching ip4Regex;
     ipv6 = lib.types.strMatching ip6Regex;
+    ip = lib.types.strMatching "${ip4Regex}|${ip6Regex}";
     cidr4 = lib.types.strMatching cidr4Regex;
     cidr6 = lib.types.strMatching cidr6Regex;
+    cidr = lib.types.strMatching "${cidr4Regex}|${cidr6Regex}";
   };
 
   # parses an IPv4 address into an array of integers

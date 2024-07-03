@@ -113,6 +113,29 @@ in
       type = lib.types.attrsOf (lib.types.submodule {
         options.peerName = lib.mkOption {
           description = "Name of veth peer (the second veth device created at the same time)";
+          type = lib.types.str;
+        };
+      });
+    };
+    tunnels = lib.mkOption {
+      default = { };
+      description = "tunnels";
+      type = lib.types.attrsOf (lib.types.submodule {
+        options.mode = lib.mkOption {
+          description = "tunnel mode";
+          type = with lib.types; nullOr (enum [ "gre" "ipip" "isatap" "sit" "vti" ]);
+        };
+        options.remote = lib.mkOption {
+          description = "remote ip";
+          type = lib.types.nullOr router-lib.types.ip;
+        };
+        options.local = lib.mkOption {
+          description = "local ip";
+          type = lib.types.nullOr router-lib.types.ip;
+        };
+        options.ttl = lib.mkOption {
+          description = "ttl";
+          type = with lib.types; nullOr int;
         };
       });
     };
@@ -718,6 +741,43 @@ in
           postStop = ''
             ip link set "${interface}" down || true
             ip link del "${interface}" || true
+          '';
+        };
+      })
+    // lib.flip lib.mapAttrs' cfg.tunnels (interface: value:
+      let
+        escapedInterface = utils.escapeSystemdPath interface;
+        flags = [ interface ]
+          ++ lib.optionals (value.mode != null) [ "mode" value.mode ]
+          ++ lib.optionals (value.remote != null) [ "remote" value.remote ]
+          ++ lib.optionals (value.local != null) [ "local" value.local ]
+          ++ lib.optionals (value.ttl != null) [ "ttl" (toString value.ttl) ];
+      in
+      {
+        name = "${escapedInterface}-netdev";
+        value = router-lib.mkServiceForIf' { inherit interface; includeBasicDeps = false; } {
+          description = "IP Tunnel ${interface}";
+          wantedBy = [
+            "network-setup.service"
+            "network.target"
+            "sys-subsystem-net-devices-${escapedInterface}.device"
+          ];
+          partOf = [ "network-setup.service" ];
+          after = [ "network-pre.target" ];
+          before = [ "network-setup.service" ];
+          serviceConfig.Type = "oneshot";
+          serviceConfig.RemainAfterExit = true;
+          stopIfChanged = false;
+          path = [ pkgs.iproute2 ];
+          script = ''
+            ip link show dev "${interface}" >/dev/null 2>&1 && ip link del "${interface}" || true
+            echo "Adding tunnel ${interface}..."
+            ip tunnel add ${lib.escapeShellArgs flags}
+            ip link set "${interface}" up
+          '';
+          postStop = ''
+            ip link set "${interface}" down || true
+            ip tunnel del "${interface}" || true
           '';
         };
       })
