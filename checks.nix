@@ -16,6 +16,7 @@ let
           ipv6.corerad.enable = true;
           ipv6.kea.enable = true;
           ipv4.addresses = [ { address = "192.168.1.1"; prefixLength = 24; } ];
+          ipv6.enableForwarding = true;
         };
         networking.nftables.enable = true;
       }

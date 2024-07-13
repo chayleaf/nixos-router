@@ -1,5 +1,6 @@
 { lib
 , config
+, options
 , pkgs
 , utils
 , ...
@@ -80,6 +81,14 @@ in
           description = "Per-namespace nftables rules.";
           default = { };
           type = nftType " on namespace start" " on namespace stop *and before the first start*";
+        };
+        options.sysctl = lib.mkOption {
+          description = "Per-namespace sysctl rules.";
+          default = { };
+          inherit (options.boot.kernel.sysctl) type;
+          example = lib.literalExpression ''
+            { "net.ipv4.tcp_syncookies" = false; "vm.swappiness" = 60; }
+          '';
         };
         options.extraStartCommands = lib.mkOption {
           description = "Start commands for this namespace.";
@@ -522,15 +531,7 @@ in
 
     boot.kernel.sysctl = {
       "net.netfilter.nf_log_all_netns" = true;
-    } // router-lib.zipHeads (lib.flip lib.mapAttrsToList cfg.interfaces (name: icfg:
-      lib.optionalAttrs (icfg.ipv4.rpFilter != null)
-        {
-          "net.ipv4.conf.${name}.rp_filter" = icfg.ipv4.rpFilter;
-        } // lib.optionalAttrs icfg.ipv4.enableForwarding {
-        "net.ipv4.conf.${name}.forwarding" = true;
-      } // lib.optionalAttrs icfg.ipv6.enableForwarding {
-        "net.ipv6.conf.${name}.forwarding" = true;
-      }));
+    };
 
     networking.usePredictableInterfaceNames = true;
     networking.firewall.filterForward = lib.mkDefault false;
@@ -538,10 +539,19 @@ in
     networking.firewall.rejectPackets = lib.mkDefault false; # drop rather than reject
 
     router.networkNamespaces =
-      builtins.zipAttrsWith (k: vs: { })
+      builtins.zipAttrsWith (k: vs: { sysctl = lib.mkMerge (builtins.filter (x: x != {}) (map (x: x.sysctl) vs)); })
         (builtins.filter (x: x != null)
-          ([{ default = null; }] ++ lib.mapAttrsToList
-            (k: v: if v.networkNamespace == null then null else { ${v.networkNamespace} = null; })
+          ([{ default.sysctl = { }; }] ++ lib.mapAttrsToList
+            (name: icfg: {
+              ${if icfg.networkNamespace == null then "default" else icfg.networkNamespace}.sysctl =
+                lib.optionalAttrs (icfg.ipv4.rpFilter != null) {
+                  "net.ipv4.conf.${name}.rp_filter" = icfg.ipv4.rpFilter;
+                } // lib.optionalAttrs icfg.ipv4.enableForwarding {
+                  "net.ipv4.conf.${name}.forwarding" = true;
+                } // lib.optionalAttrs icfg.ipv6.enableForwarding {
+                  "net.ipv6.conf.${name}.forwarding" = true;
+                };
+            })
             cfg.interfaces));
 
     systemd.services = lib.flip lib.mapAttrs' cfg.interfaces
@@ -825,6 +835,29 @@ in
             value.rules);
         };
       })
+      // lib.flip lib.mapAttrs'
+        (lib.filterAttrs (k: v: builtins.any (x: x != null) (builtins.attrValues v.sysctl)) cfg.networkNamespaces)
+        (name: value: {
+          name = "sysctl-netns-${name}";
+          value = {
+            description = "sysctl config for ${name}";
+            before = [ "network-pre.target" ];
+            wants = [ "network-pre.target" ];
+            bindsTo = [ "netns-${name}.service" ];
+            after = [ "netns-${name}.service" ];
+            wantedBy = [ "network-setup.service" "network.target" ];
+            serviceConfig.Type = "oneshot";
+            serviceConfig.RemainAfterExit = true;
+            serviceConfig.NetworkNamespacePath = lib.mkIf (name != "default") "/var/run/netns/${name}";
+            stopIfChanged = false;
+            serviceConfig.ExecStart = "${lib.getExe pkgs.sysctl} ${
+              lib.escapeShellArgs
+                (lib.mapAttrsToList
+                  (k: v: "${k}=${if v == false then "0" else toString v}")
+                  (lib.filterAttrs (k: v: v != null) value.sysctl))
+            }";
+          };
+        })
     // lib.flip lib.mapAttrs' cfg.networkNamespaces (name: value: {
       name = "netns-${name}";
       value = {

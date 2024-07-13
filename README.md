@@ -82,6 +82,9 @@ version of the option list.
       - `<route>.ipv6` - whether this rule is an IPv6 rule
       - `<route>.extraArgs` - arguments to pass to the `ip rule`
         command. May be a list or a string.
+  - `<namespace>.sysctl` - per-netns sysctl config
+    - This is useful because with separate network namespaces, sysctl
+      config is separate to some extent as well (e.g. forwarding rules)
   - `<namespace>.nftables` - nftables config to run in this namespace
     (see `router.nftables` for options)
     - Difference from `networking.nftables` - this supports JSON
