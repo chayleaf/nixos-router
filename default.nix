@@ -539,18 +539,11 @@ in
     networking.firewall.rejectPackets = lib.mkDefault false; # drop rather than reject
 
     router.networkNamespaces =
-      builtins.zipAttrsWith (k: vs: { sysctl = lib.mkMerge (builtins.filter (x: x != {}) (map (x: x.sysctl) vs)); })
+      builtins.zipAttrsWith (k: vs: { })
         (builtins.filter (x: x != null)
-          ([{ default.sysctl = { }; }] ++ lib.mapAttrsToList
+          ([{ default = { }; }] ++ lib.mapAttrsToList
             (name: icfg: {
-              ${if icfg.networkNamespace == null then "default" else icfg.networkNamespace}.sysctl =
-                lib.optionalAttrs (icfg.ipv4.rpFilter != null) {
-                  "net.ipv4.conf.${name}.rp_filter" = icfg.ipv4.rpFilter;
-                } // lib.optionalAttrs icfg.ipv4.enableForwarding {
-                  "net.ipv4.conf.${name}.forwarding" = true;
-                } // lib.optionalAttrs icfg.ipv6.enableForwarding {
-                  "net.ipv6.conf.${name}.forwarding" = true;
-                };
+              ${if icfg.networkNamespace == null then "default" else icfg.networkNamespace} = { };
             })
             cfg.interfaces));
 
@@ -584,7 +577,7 @@ in
               serviceConfig.Type = "oneshot";
               serviceConfig.RemainAfterExit = true;
               stopIfChanged = false;
-              path = [ pkgs.iproute2 ];
+              path = [ pkgs.iproute2 pkgs.sysctl ];
               script = ''
                 ${icfg.extraInitCommands}
 
@@ -627,6 +620,15 @@ in
                     exit 1
                   fi
                 '') routes6}
+                ${lib.optionalString (icfg.ipv4.rpFilter != null) ''
+                  sysctl ${lib.escapeShellArg "net.ipv4.conf.${interface}.rp_filter=${toString icfg.ipv4.rpFilter}"}
+                ''}
+                ${lib.optionalString icfg.ipv4.enableForwarding ''
+                  sysctl ${lib.escapeShellArg "net.ipv4.conf.${interface}.forwarding=1"}
+                ''}
+                ${lib.optionalString icfg.ipv6.enableForwarding ''
+                  sysctl ${lib.escapeShellArg "net.ipv6.conf.${interface}.forwarding=1"}
+                ''}
               '';
               preStop = ''
                 state="/run/nixos/network/routes/${interface}"
