@@ -1,9 +1,10 @@
-{ lib
-, config
-, pkgs
-, utils
-, router-lib
-, ...
+{
+  lib,
+  config,
+  pkgs,
+  utils,
+  router-lib,
+  ...
 }:
 
 let
@@ -21,55 +22,68 @@ let
   '';
 in
 {
-  config = lib.mkIf (cfg.enable && builtins.any (x: x.dhcpcd.enable) (builtins.attrValues cfg.interfaces)) {
-    users.users.dhcpcd = {
-      isSystemUser = true;
-      group = "dhcpcd";
-    };
-    users.groups.dhcpcd = { };
-    environment.systemPackages = [ pkgs.dhcpcd ];
-    environment.etc."dhcpcd.exit-hook".source = exitHook;
-
-    powerManagement.resumeCommands = builtins.concatStringsSep "\n" (lib.mapAttrsToList
-      (interface: icfg: ''
-        # Tell dhcpcd to rebind its interfaces if it's running.
-        /run/current-system/systemd/bin/systemctl reload "dhcpcd-${utils.escapeSystemdPath interface}.service"
-      '')
-      cfg.interfaces);
-
-    systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (interface: icfg:
-      let
-        dhcpcdConf = pkgs.writeText "dhcpcd-${interface}.conf" ''
-          hostname
-          option domain_name_servers, domain_name, domain_search, host_name
-          option classless_static_routes, ntp_servers, interface_mtu
-          nohook lookup-hostname
-          denyinterfaces ve-* vb-* lo peth* vif* tap* tun* virbr* vnet* vboxnet* sit*
-          allowinterfaces ${interface}
-          waitip
-          ${icfg.dhcpcd.extraConfig}
-        '';
-      in
+  config =
+    lib.mkIf (cfg.enable && builtins.any (x: x.dhcpcd.enable) (builtins.attrValues cfg.interfaces))
       {
-        name = "dhcpcd-${utils.escapeSystemdPath interface}";
-        value = lib.mkIf icfg.dhcpcd.enable (router-lib.mkServiceForIf interface {
-          description = "DHCP Client for ${interface}";
-          wantedBy = [ "multi-user.target" "network-online.target" ];
-          wants = [ "network.target" ];
-          before = [ "network-online.target" ];
-          restartTriggers = [ exitHook ];
-          stopIfChanged = false;
-          path = [ pkgs.dhcpcd pkgs.nettools config.networking.resolvconf.package ];
-          unitConfig.ConditionCapability = "CAP_NET_ADMIN";
-          serviceConfig = {
-            Type = "forking";
-            PIDFile = "/run/dhcpcd/${interface}.pid";
-            RuntimeDirectory = "dhcpcd";
-            ExecStart = "@${pkgs.dhcpcd}/sbin/dhcpcd dhcpcd --quiet --config ${dhcpcdConf} ${lib.escapeShellArg interface}";
-            ExecReload = "${pkgs.dhcpcd}/sbin/dhcpcd --rebind";
-            Restart = "always";
-          };
-        });
-      });
-  };
+        users.users.dhcpcd = {
+          isSystemUser = true;
+          group = "dhcpcd";
+        };
+        users.groups.dhcpcd = { };
+        environment.systemPackages = [ pkgs.dhcpcd ];
+        environment.etc."dhcpcd.exit-hook".source = exitHook;
+
+        powerManagement.resumeCommands = builtins.concatStringsSep "\n" (
+          lib.mapAttrsToList (interface: icfg: ''
+            # Tell dhcpcd to rebind its interfaces if it's running.
+            /run/current-system/systemd/bin/systemctl reload "dhcpcd-${utils.escapeSystemdPath interface}.service"
+          '') cfg.interfaces
+        );
+
+        systemd.services = lib.flip lib.mapAttrs' cfg.interfaces (
+          interface: icfg:
+          let
+            dhcpcdConf = pkgs.writeText "dhcpcd-${interface}.conf" ''
+              hostname
+              option domain_name_servers, domain_name, domain_search, host_name
+              option classless_static_routes, ntp_servers, interface_mtu
+              nohook lookup-hostname
+              denyinterfaces ve-* vb-* lo peth* vif* tap* tun* virbr* vnet* vboxnet* sit*
+              allowinterfaces ${interface}
+              waitip
+              ${icfg.dhcpcd.extraConfig}
+            '';
+          in
+          {
+            name = "dhcpcd-${utils.escapeSystemdPath interface}";
+            value = lib.mkIf icfg.dhcpcd.enable (
+              router-lib.mkServiceForIf interface {
+                description = "DHCP Client for ${interface}";
+                wantedBy = [
+                  "multi-user.target"
+                  "network-online.target"
+                ];
+                wants = [ "network.target" ];
+                before = [ "network-online.target" ];
+                restartTriggers = [ exitHook ];
+                stopIfChanged = false;
+                path = [
+                  pkgs.dhcpcd
+                  pkgs.nettools
+                  config.networking.resolvconf.package
+                ];
+                unitConfig.ConditionCapability = "CAP_NET_ADMIN";
+                serviceConfig = {
+                  Type = "forking";
+                  PIDFile = "/run/dhcpcd/${interface}.pid";
+                  RuntimeDirectory = "dhcpcd";
+                  ExecStart = "@${pkgs.dhcpcd}/sbin/dhcpcd dhcpcd --quiet --config ${dhcpcdConf} ${lib.escapeShellArg interface}";
+                  ExecReload = "${pkgs.dhcpcd}/sbin/dhcpcd --rebind";
+                  Restart = "always";
+                };
+              }
+            );
+          }
+        );
+      };
 }
