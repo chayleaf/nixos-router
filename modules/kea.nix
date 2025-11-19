@@ -165,6 +165,10 @@ in
                   environment = {
                     KEA_PIDFILE_DIR = "/run/kea4-${interface}";
                     KEA_LOCKFILE_DIR = "/run/kea4-${interface}";
+                    KEA_CONTROL_SOCKET_DIR = "/run/kea4-${interface}";
+                    KEA_DHCP_DATA_DIR = "/var/lib/private/kea";
+                    KEA_HOOK_SCRIPTS_PATH = "/nix/store";
+                    KEA_HOOKS_PATH = "${package}/lib/kea/hooks";
                   };
                   restartTriggers = [ configs.${interface} ];
 
@@ -181,6 +185,7 @@ in
                       "CAP_NET_RAW"
                     ];
                     RuntimeDirectory = "kea4-${interface}";
+                    RuntimeDirectoryMode = "0750";
                   } // commonServiceConfig;
                 }
               );
@@ -280,6 +285,10 @@ in
                   environment = {
                     KEA_PIDFILE_DIR = "/run/kea6-${interface}";
                     KEA_LOCKFILE_DIR = "/run/kea6-${interface}";
+                    KEA_CONTROL_SOCKET_DIR = "/run/kea6-${interface}";
+                    KEA_DHCP_DATA_DIR = "/var/lib/private/kea";
+                    KEA_HOOK_SCRIPTS_PATH = "/nix/store";
+                    KEA_HOOKS_PATH = "${package}/lib/kea/hooks";
                   };
                   restartTriggers = [ configs.${interface} ];
 
@@ -296,6 +305,7 @@ in
                       "CAP_NET_RAW"
                     ];
                     RuntimeDirectory = "kea6-${interface}";
+                    RuntimeDirectoryMode = "0750";
                   } // commonServiceConfig;
                 }
               );
