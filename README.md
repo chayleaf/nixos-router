@@ -212,7 +212,8 @@ version of the option list.
         `true` otherwise). Otherwise, it will simply be used as
         default value for service config.
       - `<addr>.gateways` - for DHCP servers - the IPv6 gateways for
-        this network. If empty, I don't know what happens, you guess.
+        this network. If empty, this may cause breakages, such as 
+        corerad crashing.
         - Each gateway may be a string in the CIDR notation.
           Alternatively, it may be an attrset with the following
           attrs:
@@ -270,7 +271,7 @@ version of the option list.
         `AdvOtherConfigFlag` default to true as well.
     - `<iface>.ipv6.corerad` - CoreRAD settings (IPv6 router
       advertisement daemon)
-      - `<iface>.ipv6.corerad.enable` - enable radvd
+      - `<iface>.ipv6.corerad.enable` - enables corerad
       - `<iface>.ipv6.corerad.interfaceSettings` - per-interface
         settings (attrs). Defaults to `advertise = true`, if any DHCP
         server (e.g. Kea) is enabled then `managed` and `other_config`
