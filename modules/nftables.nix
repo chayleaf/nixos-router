@@ -129,8 +129,8 @@ in
 {
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {
-      # separate this out so it doesn't depend on systemHasNftables
-      networking.nftables.enable = lib.mkDefault config.networking.firewall.enable;
+      # separate this out so it doesn't depend on config.networking.nftables.enable
+      networking.nftables.enable = lib.mkDefault true;
     })
     (lib.mkIf (cfg.enable && config.networking.nftables.enable) {
       router.networkNamespaces.default =
